@@ -1,0 +1,12 @@
+certifi @ file:///croot/certifi_1671487769961/work/certifi
+flake8 @ file:///croot/flake8_1674581792275/work
+markdown-it-py==2.2.0
+mccabe @ file:///opt/conda/conda-bld/mccabe_1644221741721/work
+mdurl==0.1.2
+pycodestyle @ file:///croot/pycodestyle_1674267221883/work
+pyflakes @ file:///croot/pyflakes_1674165128613/work
+Pygments==2.14.0
+rich==13.3.1
+rich_argparse==1.0.0
+ruamel.yaml==0.17.21
+ruamel.yaml.clib==0.2.7

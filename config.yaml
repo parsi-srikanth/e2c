@@ -1,0 +1,112 @@
+# Description:
+# E2C uses this yaml file to setup the computing system for simulation.
+# The config file has two parts: 
+#   (i)  E2C paramters:
+#         This part is used to control the behavior of E2C.
+#   (ii) system parametrs:
+#          This part is used to setup different components of the computing 
+#          system for the simulation in E2C. The settings are for loadbalancer,
+#          scheduler, and tiers. Macines, tasks, and battery are also defined
+#          for each tier.
+
+e2c parameters:
+  verbosity: INFO
+  gui: on
+
+system parameters:
+  # Loadbalancer methods must be added here.
+  loadbalancer:
+    methods:
+    - MM
+    - MSD
+    - MMU
+    - FCFS
+    - WFCFS
+    - MECT
+    - MEET
+    used: WFCFS
+
+  scheduler:
+    # Scheduler methods must be added here. 
+    methods:
+    - RR
+    used: RR
+
+  urgency levels:
+  - BESTEFFORT
+  - URGENT
+
+  task attributes:
+    deadline:
+      type: float
+      choices:
+    urgency:
+      type: str
+      choices:
+      - BESTEFFORT
+      - URGENT
+    eet:
+      type: float # list[float]
+      choices:
+
+  machine attributes:
+    dynamic power:
+      type: float
+      choices:
+    static power:
+      type: float
+      choices:
+    replicas:
+      type: int
+      choices:
+
+
+  tiers:
+    tier-1:
+      loadbalancer:
+      # loadbalancer method should be in loadbalancer methods defined above.
+        method: MM
+      scheduler:
+      # scheduuler method should be in scheduler methods defined above.
+        method: RR
+      machines:
+      # Machines in each subtier are defined here. An anchor 
+      # that follows &m<number> convention is also added to each machine
+      # definition.
+        M2:
+          dynamic power: 300
+          static power: 15
+          replicas: 1
+
+        M1:
+          dynamic power: 50.0
+          static power: 10.0
+          replicas: 1000
+      tasks:
+      # Tasks in each subtier are defined here. An anchor that follows 
+      # that follows &t<number> convention is also added to each task 
+      # definition.
+      # eet: expected execution time of the task type on each machine 
+      # type. 
+        T1:
+          deadline: 50
+          eet:
+            M2: 2.0
+            M1: 20.0
+          urgency: BESTEFFORT
+
+        T2:
+          deadline: 555.0
+          eet:
+            M2: 25.0
+            M1: 23.0
+          urgency: BESTEFFORT
+      battery:
+        capacity: 500.0
+
+
+
+
+
+
+
