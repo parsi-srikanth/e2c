@@ -2,41 +2,31 @@
 TODO: Add Description
 """
 import heapq
-
 from .event import Event
 
 class EventQueue:
-    """  
-        All events are queued in EventQueue.
-        
-        events: It is the list of events in the queue. It has
-        Min-heap data structure. It can help sorting the queue based on the
-        event.time with reasonable time complexity.
-    """
+    """A priority queue for storing and managing events"""
 
-    events = []
+    def __init__(self):
+        self.events:Event = []
 
     def add(self, event):
-        """Insert an event into the events."""
+        """Insert an event into the event queue"""
         if isinstance(event, Event):
             heapq.heappush(self.events, event)
 
     def pop(self):
-        """it returns the root of events which is the event with 
-        smallest time."""
+        """Remove and return the event with the smallest time"""
+        return heapq.heappop(self.events) if self.events else None
 
-        if self.events:  # it checks that events is non-empty
-            return heapq.heappop(self.events)
-        else:
-            return Event(None, None, None)
+    def remove(self, event:Event):
+        """Remove an event from the event queue"""
+        try:
+            self.events.remove(event)
+            heapq.heapify(self.events)
+        except ValueError:
+            pass
 
-    def remove(self, event):
-        """It removes the event from the events. Then, the resulted
-        events is heapified again. """
-        print(self.events)
-        print('\n\n\n')
-        self.events.remove(event)
-        heapq.heapify(self.events)
-    
-    def reset(self):
+    def clear(self):
+        """Clear the event queue"""
         self.events = []

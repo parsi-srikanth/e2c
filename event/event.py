@@ -3,24 +3,21 @@ TODO: Add Description
 """
 
 from enum import Enum, unique
-from .event_type import EventTypes
-from ..task.task import Task
+from event.event_type import EventTypes
+from assigned_task.assigned_task import Task
 
 class Event:
-    """  An event explains different stages of processing a task, from
-         arriving to completing the task.
-        
-         event_type: The stage of processing a task like "arriving" or 
-         "completing" 
-         time: It is the time of occurring an event. For example,
-         time of arriving a task in "arriving" event.
-         metadata: a dictionary that describes the event in detail.
-    """
 
-    def __init__(self, time, event_type, task):
-        self._time: float = time
+    def __init__(self, time, event_type:EventTypes, assigned_task:Task):
+        if not isinstance(time, float):
+            raise TypeError('Time of the event occuring must be a' 
+                            'float value')
+        elif time < 0:
+            raise ValueError('Time of the event occuring cannot be'
+                             'a negative value')
+        self._time = time
         self._event_type: EventTypes = event_type
-        self._metadata: Task = task
+        self._assigned_task: Task = assigned_task
 
     @property
     def time(self) -> float:
@@ -43,18 +40,20 @@ class Event:
     @event_type.setter
     def event_type(self, event_type):
         if not isinstance(event_type, EventTypes):
-            raise TypeError('The stage of processing a task must be a' 
-                            'ENUM')
+            raise TypeError('The stage of processing a assigned_task must be of' 
+                            'EventType object')
         self._event_type = event_type
 
     @property
-    def metadata(self) -> Task:
-        return self._metadata
+    def assigned_task(self) -> Task:
+        return self._assigned_task
     
-    @metadata.setter
-    def metadata(self, task):
-        if isinstance(task, Task):
-            self._metadata = task
+    @assigned_task.setter
+    def assigned_task(self, assigned_task):
+        if not isinstance(assigned_task, Task):
+            raise TypeError('The assigning_task must be of' 
+                            'Task object')
+            self._assigned_task = assigned_task
 
     def __eq__(self, other):
         return self.time == other.time
