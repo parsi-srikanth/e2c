@@ -40,7 +40,7 @@ class Event:
     @event_type.setter
     def event_type(self, event_type):
         if not isinstance(event_type, EventTypes):
-            raise TypeError('The stage of processing a assigned_task must be of' 
+            raise TypeError('The stage of processing a assigned task must be of' 
                             'EventType object')
         self._event_type = event_type
 
@@ -51,7 +51,7 @@ class Event:
     @assigned_task.setter
     def assigned_task(self, assigned_task):
         if not isinstance(assigned_task, Task):
-            raise TypeError('The assigning_task must be of' 
+            raise TypeError('The assigned task must be of' 
                             'Task object')
             self._assigned_task = assigned_task
 
