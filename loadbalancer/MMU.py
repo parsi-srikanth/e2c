@@ -11,7 +11,6 @@ import time
 
 class MMU(BaseScheduler):
     
-
     def __init__(self, total_no_of_tasks):
         super().__init__()
         self.name = 'MMU'
