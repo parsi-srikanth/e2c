@@ -1,5 +1,6 @@
 """
-TODO: Add Description
+TODO: Add description
+
 """
 
 from task.task_status import TaskStatus
@@ -8,19 +9,20 @@ import config.config as config
 from event import Event, EventTypes
 import time
 
-
-class MMU(BaseLoadBalancer):
+class MM(BaseScheduler):
     
+
     def __init__(self, total_no_of_tasks: int):
         super().__init__()
-        self._name: str = 'MMU'
+        self._name: str = 'MM'
         self._sleep_time: float = 0.1
         if total_no_of_tasks > 0:
             self._total_no_of_tasks = total_no_of_tasks
         else:
             raise ValueError('total no of tasks cannot be'
                              'a negative value') 
-        
+        self.gui_machine_log = []
+
     @property
     def name(self):
         return self._name
@@ -55,50 +57,49 @@ class MMU(BaseLoadBalancer):
             raise ValueError('sleep time cannot be a negative value')
         self._sleep_time = sleep_time
     
-
+    
     def phase1(self):
        
         provisional_map = []
-        index = 0        
+        index = 0     
         self.prune()       
         for task in self.queue.list:
             min_ct = float('inf')
             min_ct_machine = None            
             for machine in config.machines:
-                pct = machine.provisional_map(task)          
+                pct = machine.provisional_map(task)              
                 if pct < min_ct:
                     min_ct = pct
                     min_ct_machine = machine 
-
+           
+        
             provisional_map.append([task, min_ct, min_ct_machine, index])
             index += 1 
         
         return provisional_map
     
+
     def phase2(self, provisional_map):
         provisional_map_machines = []        
         for machine in config.machines:
             if not machine.queue.full():
-                max_u =float('-inf')
+                min_ct =float('inf')
                 task = None
                 index = None
-                for pair in provisional_map:
-                    slack = pair[0].deadline - pair[1]
-                    if slack == 0:
-                        urgency = float('inf')
-                    else:
-                        urgency = 1 /slack             
-                    if pair[2] != None and pair[2].id == machine.id and urgency > max_u:
+                for pair in provisional_map:                    
+                    if pair[2] != None and pair[2].id == machine.id and pair[1] < min_ct:
                         task = pair[0]
-                        max_u = urgency
+                        min_ct = pair[1]
                         index = pair[3]   
                 provisional_map_machines.append([task,machine,index])
 
         return provisional_map_machines
 
+
+
     def decide(self):
         self.gui_machine_log = []
-        
+
         if config.settings['verbosity'].equals(Verbosity.INFO):
             s = f'\n Current State @{config.time.gct()}'
             s = '\nBQ = '

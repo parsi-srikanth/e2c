@@ -5,150 +5,73 @@ TODO: Add Description
 from utils.base_task import TaskStatus
 from utils.base_scheduler import BaseScheduler
 import utils.config as config
-from utils.event import Event, EventTypes
+from event import Event, EventTypes
 import time
 
 
 class MSD(BaseScheduler):
-    
 
-    def __init__(self, total_no_of_tasks):
+    def __init__(self, total_no_of_tasks: int):
         super().__init__()
-        self.name = 'MSD'
-        self.total_no_of_tasks = total_no_of_tasks
-        self.sleep_time = 0.1   
-
-    def choose(self, index=0):
-        task = self.batch_queue.get(index)     
-        self.unmapped_task.append(task)
-        if config.gui==1:
-            self.decision.emit({'type':'choose',
-                                'time':config.time.gct(),
-                                'where':'simulator: choose',
-                                'data': {'task':task,
-                                        'bq_indx': index,
-                                        },                                
-                                        })
-            time.sleep(self.sleep_time)
-        if config.settings['verbosity']:
-            s =f'\n{task.id} selected --> BQ = '
-            bq = [t.id for t in self.batch_queue.list]
-            s += f'{bq}'
-            s += f'\nexecutime: {task.execution_time}'
-            s += f'\testimeated_time{task.estimated_time}'
-
-            config.log.write(s)
-        
-        return task
-    
-    
-    def defer(self, task):
-        if config.time.gct() > task.deadline:
-            self.drop(task)
-            return 1
-        if config.gui==1:
-            self.decision.emit({'type':'defer',
-                            'time':config.time.gct(),
-                            'where':'simulator: defer',
-                            'data': {'task':task,                                    
-                                    },                            
-                                    })
-            time.sleep(self.sleep_time)
-        self.unmapped_task.pop()
-        task.status =  TaskStatus.DEFERRED
-        task.no_of_deferring += 1
-        self.batch_queue.put(task)
-         
-        self.stats['deferred'].append(task)
-
-        event_time = config.event_queue.event_list[0].time
-        event_type = EventTypes.DEFERRED
-        event = Event(event_time, event_type, task)
-        config.event_queue.add_event(event)
-
-        if config.settings['verbosity']:
-            s = '\n[ Task({:}),  _________ ]: Deferred       @time({:3.3f})'.format(
-            task.id, config.time.gct())
-            config.log.write(s)
-        self.gui_machine_log.append({"Task id":task.id,"Event Type":"DEFERRED","Time":config.time.gct(), "Type":'task'})
-
-    def drop(self, task):
-        self.unmapped_task.pop()
-        task.status = TaskStatus.CANCELLED
-        task.drop_time = config.time.gct()
-        self.stats['dropped'].append(task) 
-        if config.gui==1:
-            self.decision.emit({'type':'cancelled',
-                                'time':config.time.gct(),
-                                'where':'simulator: drop',
-                                'data': {'task':task,                                    
-                                        },                               
-                                        })
-            time.sleep(self.sleep_time)
-        if config.settings['verbosity']:       
-            s = '\n[ Task({:}),  _________ ]: Cancelled      @time({:3.3f})'.format(
-                task.id, config.time.gct()       )
-            config.log.write(s)
-        self.gui_machine_log.append({"Task id":task.id,"Event Type":"CANCELLED","Time":config.time.gct(), "Type":'task'})
-
-    def map(self, machine):
-        task = self.unmapped_task.pop()
-        assignment = machine.admit(task)
-        if assignment != 'notEmpty':
-            task.assigned_machine = machine
-            self.stats['mapped'].append(task)
-            if config.gui==1:
-                self.decision.emit({'type':'map',
-                                'time':config.time.gct(),
-                                'where':'scheduler: map',
-                                'data': {'task':task,
-                                         'assigned_machine':machine,                                    
-                                        },
-                                        })
-                time.sleep(self.sleep_time)
+        self._name: str = 'MSD'
+        self._sleep_time: float = 0.1  
+        if total_no_of_tasks > 0:
+            self._total_no_of_tasks = total_no_of_tasks
         else:
-            self.defer(task)
-    
-    def prune(self):
+            raise ValueError('total no of tasks cannot be'
+                             'a negative value')
 
-        for task in self.batch_queue.list:
-            if config.time.gct() > task.deadline:                
-                task.status = TaskStatus.CANCELLED
-                task.drop_time = config.time.gct()
-                self.stats['dropped'].append(task) 
-                self.batch_queue.remove(task)
-                if config.gui==1:
-                        self.decision.emit({'type':'cancelled',
-                                        'time':config.time.gct(),
-                                        'where':'scheduelr: prune',
-                                        'data': {'task':task,                                                                                  
-                                                },                                        
-                                                })
-                        time.sleep(self.sleep_time)
+    @property
+    def name(self):
+        return self._name
 
+    @name.setter
+    def name(self, name):
+        self._name = name
 
+    @property
+    def total_no_of_tasks(self):
+        return self._total_no_of_tasks
+
+    @total_no_of_tasks.setter
+    def total_no_of_tasks(self, total_no_of_tasks):
+        if not isinstance(total_no_of_tasks, int):
+            raise TypeError('total no of tasks must be a' 
+                            'integer value')
+        elif total_no_of_tasks < 0:
+            raise ValueError('total no of tasks cannot be'
+                             'a negative value')
+        self._total_no_of_tasks = total_no_of_tasks
+
+    @property
+    def sleep_time(self):
+        return self._sleep_time
+
+    @sleep_time.setter
+    def sleep_time(self, sleep_time):
+        if not isinstance(sleep_time, float):
+            raise TypeError('sleep time must be a float value')
+        elif sleep_time < 0:
+            raise ValueError('sleep time cannot be a negative value')
+        self._sleep_time = sleep_time
     
     def phase1(self):
        
         provisional_map = []
-        index = 0 
-        # s = '\nPHASE-I:'        
+        index = 0   
         self.prune()       
-        for task in self.batch_queue.list:
+        for task in self.queue.list:
             min_ct = float('inf')
             min_ct_machine = None            
             for machine in config.machines:
-                pct = machine.provisional_map(task)
-                # s += f'\ntask: {task.id} on {machine.type.name} --> pct: {pct}'                
+                pct = machine.provisional_map(task)             
                 if pct < min_ct:
                     min_ct = pct
                     min_ct_machine = machine 
            
         
             provisional_map.append([task, min_ct, min_ct_machine, index])
-            index += 1 
-             
-        #config.log.write(s)
+            index += 1
         
         return provisional_map
     
@@ -169,15 +92,13 @@ class MSD(BaseScheduler):
 
         return provisional_map_machines
 
-
-
-    def schedule(self):
+    def decide(self):
         self.gui_machine_log = []    
         
-        if config.settings['verbosity']:
+        if config.settings['verbosity'].equals(Verbosity.INFO):
             s = f'\n Current State @{config.time.gct()}'
             s = '\nBQ = '
-            bq = [t.id for t in self.batch_queue.list]
+            bq = [t.id for t in self.queue.list]
             s += f'{bq}'
             s += '\n\nMACHINES ==>>>'
             for m in config.machines:
@@ -199,7 +120,7 @@ class MSD(BaseScheduler):
             assigned_machine = pair[1]  
 
             if task != None :
-                index = self.batch_queue.list.index(task)                                               
+                index = self.queue.list.index(task)                                               
                 task = self.choose(index)
                 self.map(assigned_machine)
                 s = f"\ntask:{task.id}  assigned to:{assigned_machine.type.name}  ec:{pair[2]}   delta:{task.deadline}"
