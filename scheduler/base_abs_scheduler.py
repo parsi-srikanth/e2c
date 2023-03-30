@@ -4,6 +4,9 @@ TODO: Add description
 from abs import ABC, abstractmethod
 
 from clock import Clock
+from task.task import Task
+# from somewhere import Queue
+from machine.machine import Machine
 
 
 class baseAbsScheduler(ABC):
@@ -11,7 +14,7 @@ class baseAbsScheduler(ABC):
     TODO: Class description
     """
 
-    def __init__(self, name: str) -> None: #are stats and queue parameters? is name?
+    def __init__(self, name: str) -> None:
         super().__init__()
         self._name = name
         # self._stats =
@@ -50,30 +53,32 @@ class baseAbsScheduler(ABC):
 
 
     def choose(self) -> Task:
-        task = first_arrived_to_mq #fcfs? #does choose func need to know the scheduling method? 
+        #for fcfs
+        task = Queue.pop()
     
     def admit(self, task: Task) -> bool:
+        pass
     
 
     def allocate(self, task: Task) -> Machine:
         machine.running = task
         
 
-    def schedule(self, task: Task):  #where does the task come from that gets passed into schedule func?
-        task = choose()
+    def schedule(self, task: Task):  
+        task = self.choose()
         if machine.is_empty():
-            machine = allocate(task)
+            machine = self.allocate(task)
     
     def defer(self, task: Task):
-    
+        pass
 
-    def prune(self) -> [Task]:
-        #remove machine's task and all tasks from machine queue?
-    
+    def prune(self) -> Task[Task]:
+        pass
+
     def is_empty(self) -> bool:
-        if machine.running:        #use this if the field "running: Task" on BaseAbsMachine is empty if machine isnt busy?
-            return False              #i am unsure how to see if machine is empty
+        if machine.running:        #i am unsure how to see if machine is empty
+            return False
         return True
 
     def q_completion_time(self) -> float:
-    
+        pass
