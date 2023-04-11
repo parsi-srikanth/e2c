@@ -1,13 +1,17 @@
 """
 TODO: Add description
 """
-from abs import ABC, abstractmethod
-
+from abs import ABC
+import clock as clock
+import config.config as config
+from event import Event, EventTypes
+import queue as Queue
+import TaskStatus as TaskStatus
 
 
 class baseAbsLoadBalancer(ABC):
     """
-    TODO: Class description
+    TODO: AddClass description
     """
 
     taskToBeActioned = None
@@ -15,128 +19,89 @@ class baseAbsLoadBalancer(ABC):
     def __init__(self) -> None:
         super().__init__()
         self.queue = Queue()
-        self.name = 'base'
-        self.stats = {'drop':[], 'deferred':[], 'cancelled':[], 'mapped':[]}
+        self._name = 'base'
+        self._total_no_of_tasks = 0
+        self.stats = {
+            'drop': [],
+            'deferred': [],
+            'cancelled': [],
+            'mapped': []
+            }
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name: str):
+        self._name = name
+
+    @property
+    def total_no_of_tasks(self):
+        return self._total_no_of_tasks
+
+    @total_no_of_tasks.setter
+    def total_no_of_tasks(self, total_no_of_tasks):
+        if not isinstance(total_no_of_tasks, int):
+            raise TypeError('total no of tasks must be a'
+                            'integer value')
+        elif total_no_of_tasks < 0:
+            raise ValueError('total no of tasks cannot be'
+                             'a negative value')
+        self._total_no_of_tasks = total_no_of_tasks
 
     def get_stats(self):
         return self.stats
-    
-    def get_name(self):
-        return self.name
 
     def get_queue(self):
         return self.queue
-    
+
     def isempty(self):
         return self.queue.isempty()
-    
-    def choose(self, index=0):
-        taskToBeActioned = self.queue.get(index)     
-        if config.gui.equals('on'):
-            self.decision.emit({'type':'choose',
-                                'time':config.time.gct(),
-                                'where':'simulator: choose',
-                                'data': {'task':taskToBeActioned,
-                                        'bq_indx': index,
-                                        },                                
-                                        })
-            time.sleep(self.sleep_time)
-        if config.settings['verbosity'].equals(Verbosity.INFO):
-            s =f'\n{taskToBeActioned.id} selected --> BQ = '
-            bq = [t.id for t in self.queue.list]
-            s += f'{bq}'
-            s += f'\nexecutime: {taskToBeActioned.execution_time}'
-            s += f'\testimeated_time{taskToBeActioned.estimated_time}'
 
-            config.log.write(s)
-        
+    def choose_task(self, index=0):
+        taskToBeActioned = self.queue.get(index)
         return taskToBeActioned
 
     def defer(self, task):
-        if config.time.gct() > task.deadline:
+        if clock.time() > task.deadline:
             self.drop(task)
             return 1
-        if config.gui.equals('on'):
-            self.decision.emit({'type':'defer',
-                            'time':config.time.gct(),
-                            'where':'simulator: defer',
-                            'data': {'task':task,                                    
-                                    },                            
-                                    })
-            time.sleep(self.sleep_time)
-        taskToBeActioned = None
-        task.status =  TaskStatus.DEFERRED
+        self.taskToBeActioned = None
+        task.status = TaskStatus.DEFERRED
         task.no_of_deferring += 1
         self.queue.put(task)
-         
         self.stats['deferred'].append(task)
-
         event_time = config.event_queue.event_list[0].time
         event_type = EventTypes.DEFERRED
         event = Event(event_time, event_type, task)
         config.event_queue.add_event(event)
 
-        if config.settings['verbosity'].equals(Verbosity.INFO):
-            s = '\n[ Task({:}),  _________ ]: Deferred       @time({:3.3f})'.format(
-            task.id, config.time.gct())
-            config.log.write(s)
-        self.gui_machine_log.append({"Task id":task.id,"Event Type":"DEFERRED","Time":config.time.gct(), "Type":'task'})
-
     def drop(self, task):
-        taskToBeActioned = None
+        self.taskToBeActioned = None
         task.status = TaskStatus.CANCELLED
-        task.drop_time = config.time.gct()
-        self.stats['dropped'].append(task) 
-        if config.gui.equals('on'):
-            self.decision.emit({'type':'cancelled',
-                                'time':config.time.gct(),
-                                'where':'simulator: drop',
-                                'data': {'task':task,                                    
-                                        },                               
-                                        })
-            time.sleep(self.sleep_time)
-        if config.settings['verbosity'].equals(Verbosity.INFO):       
-            s = '\n[ Task({:}),  _________ ]: Cancelled      @time({:3.3f})'.format(
-                task.id, config.time.gct()       )
-            config.log.write(s)
-        self.gui_machine_log.append({"Task id":task.id,"Event Type":"CANCELLED","Time":config.time.gct(), "Type":'task'})
+        task.drop_time = clock.time()
+        self.stats['dropped'].append(task)
+        self.queue.remove(task)
 
-    def map(self, machine):
-        task = taskToBeActioned
+    def assign_task_to_machine(self, task, machine):
+        task = self.choose_task() if self.taskToBeActioned is None \
+            else self.taskToBeActioned
         assignment = machine.admit(task)
         if assignment != 'notEmpty':
             task.assigned_machine = machine
             self.stats['mapped'].append(task)
-            if config.gui.equals('on'):
-                self.decision.emit({'type':'map',
-                                'time':config.time.gct(),
-                                'where':'scheduler: map',
-                                'data': {'task':task,
-                                         'assigned_machine':machine,                                    
-                                        },
-                                        })
-                time.sleep(self.sleep_time)
+            task.status = TaskStatus.MAPPED
         else:
             self.defer(task)
-    
-    def prune(self):
 
+    def prune(self):
         for task in self.queue.list:
-            if config.time.gct() > task.deadline:                
+            if clock.time() > task.deadline:
                 task.status = TaskStatus.CANCELLED
-                task.drop_time = config.time.gct()
-                self.stats['dropped'].append(task) 
+                task.drop_time = clock.time()
+                self.stats['dropped'].append(task)
                 self.queue.remove(task)
-                if config.gui.equals('on'):
-                        self.decision.emit({'type':'cancelled',
-                                        'time':config.time.gct(),
-                                        'where':'scheduler: prune',
-                                        'data': {'task':task,                                                                                  
-                                                },                                        
-                                                })
-                        time.sleep(self.sleep_time)
-    
+
     def decide():
         raise NotImplementedError("Please Implement this method")
-
-

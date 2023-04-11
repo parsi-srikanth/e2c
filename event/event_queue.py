@@ -4,11 +4,12 @@ TODO: Add Description
 import heapq
 from .event import Event
 
+
 class EventQueue:
     """A priority queue for storing and managing events"""
 
     def __init__(self):
-        self.events:Event = []
+        self.events: Event = []
 
     def add(self, event):
         """Insert an event into the event queue"""
@@ -19,7 +20,7 @@ class EventQueue:
         """Remove and return the event with the smallest time"""
         return heapq.heappop(self.events) if self.events else None
 
-    def remove(self, event:Event):
+    def remove(self, event: Event):
         """Remove an event from the event queue"""
         try:
             self.events.remove(event)

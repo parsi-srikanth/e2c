@@ -2,95 +2,39 @@
 TODO: Add Description
 """
 
-from task.task_status import TaskStatus
 from loadbalancer.base_loadbalancer import BaseLoadBalancer
 import config.config as config
-from event import Event, EventTypes
 import numpy as np
 
 
-class MECT(BaseScheduler):
-    
+class MECT(BaseLoadBalancer):
 
     def __init__(self, total_no_of_tasks: int):
         super().__init__()
-        self._name: str = 'MECT'
-        self._sleep_time: float = 0.1
-        if total_no_of_tasks > 0:
-            self._total_no_of_tasks = total_no_of_tasks
-        else:
-            raise ValueError('total no of tasks cannot be'
-                             'a negative value') 
-        
-    @property
-    def name(self):
-        return self._name
-    
-    @name.setter
-    def name(self, name):
-        self._name = name
-    
-    @property
-    def total_no_of_tasks(self):
-        return self._total_no_of_tasks
-    
-    @total_no_of_tasks.setter
-    def total_no_of_tasks(self, total_no_of_tasks):
-        if not isinstance(total_no_of_tasks, int):
-            raise TypeError('total no of tasks must be a' 
-                            'integer value')
-        elif total_no_of_tasks < 0:
-            raise ValueError('total no of tasks cannot be'
-                             'a negative value')
-        self._total_no_of_tasks = total_no_of_tasks
-
-    @property
-    def sleep_time(self):
-        return self._sleep_time
-
-    @sleep_time.setter
-    def sleep_time(self, sleep_time):
-        if not isinstance(sleep_time, float):
-            raise TypeError('sleep time must be a float value')
-        elif sleep_time < 0:
-            raise ValueError('sleep time cannot be a negative value')
-        self._sleep_time = sleep_time
-    
+        self.name(self, 'MECT')
+        self.total_no_of_tasks(self, total_no_of_tasks)
 
     def decide(self):
-        self.gui_machine_log = []
-        
-        if config.settings['verbosity'].equals(Verbosity.INFO):
-            s = f'\n Current State @{config.time.gct()}'
-            s = '\nBQ = '
-            bq = [t.id for t in self.queue.list]
-            s += f'{bq}'
-            s += '\n\nMACHINES ==>>>'
-            for m in config.machines:
-                s += f'\n\tMachine {m.type.name} :'
-                if m.running_task:
-                    r = [m.running_task[0].id]
-                else:
-                    r = []
-                mq = [t.id for t in m.queue.list]
-                r.append(mq)
-                s +=f'\t{r}'
-            config.log.write(s)
+        """
+        calculates a provisional map score for each machine
+        based on the (task completion time + queue length),
+        then selects a random machine from the machines with the lowest score.
+        """
+        if self.queue.empty():
+            return None
 
-        
-        if not self.queue.empty():
-            task = self.choose()
-            
-            pcts = [[machine.provisional_map(task), machine.id] for machine in config.machines]           
-            min_pct = min(pcts, key=lambda x:x[0])[0]            
-            pcts = np.array(pcts)
-            ties = pcts[pcts[:,0] == min_pct]
-            np.random.seed(task.id)
-            assigned_machine_idx = int(np.random.choice(ties[:,1]))            
-            assigned_machine = config.machines[assigned_machine_idx]
+        task = self.choose_task()
+        provisional_maps = []
+        for machine in config.machines:
+            score = machine.provisional_map(task)
+            provisional_maps.append((score, machine.id))
 
-            self.map(assigned_machine)
-            s = f"\ntask:{task.id}  assigned to:{assigned_machine.type.name}  delta:{task.deadline} min_pct:{min_pct}"
-            config.log.write(s)     
-                       
-            return assigned_machine
+        min_score = min(provisional_maps, key=lambda x: x[0])[0]
+        ties = [machine_id for score, machine_id in provisional_maps
+                if score == min_score]
+        selected_machine_idx = int(np.random.choice(ties[:, 1]))
+        selected_machine = config.machines[selected_machine_idx]
+
+        self.assign_task_to_machine(task, selected_machine)
+        self.queue.remove(task)
+        return selected_machine
