@@ -2,11 +2,11 @@
 TODO: Add description
 """
 from abs import ABC
-import clock as clock
-import config.config as config
+from clock import clock
+from config import config
 from event import Event, EventTypes
 import queue as Queue
-import TaskStatus as TaskStatus
+from Task import TaskStatus
 
 
 class baseAbsLoadBalancer(ABC):
@@ -14,7 +14,7 @@ class baseAbsLoadBalancer(ABC):
     TODO: AddClass description
     """
 
-    taskToBeActioned = None
+    task_to_be_actioned = None
 
     def __init__(self) -> None:
         super().__init__()
@@ -60,14 +60,14 @@ class baseAbsLoadBalancer(ABC):
         return self.queue.isempty()
 
     def choose_task(self, index=0):
-        taskToBeActioned = self.queue.get(index)
-        return taskToBeActioned
+        task_to_be_actioned = self.queue.get(index)
+        return task_to_be_actioned
 
     def defer(self, task):
         if clock.time() > task.deadline:
             self.drop(task)
             return 1
-        self.taskToBeActioned = None
+        self.task_to_be_actioned = None
         task.status = TaskStatus.DEFERRED
         task.no_of_deferring += 1
         self.queue.put(task)
@@ -78,15 +78,15 @@ class baseAbsLoadBalancer(ABC):
         config.event_queue.add_event(event)
 
     def drop(self, task):
-        self.taskToBeActioned = None
+        self.task_to_be_actioned = None
         task.status = TaskStatus.CANCELLED
         task.drop_time = clock.time()
         self.stats['dropped'].append(task)
         self.queue.remove(task)
 
     def assign_task_to_machine(self, task, machine):
-        task = self.choose_task() if self.taskToBeActioned is None \
-            else self.taskToBeActioned
+        task = self.choose_task() if self.task_to_be_actioned is None \
+            else self.task_to_be_actioned
         assignment = machine.admit(task)
         if assignment != 'notEmpty':
             task.assigned_machine = machine

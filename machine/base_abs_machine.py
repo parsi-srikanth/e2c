@@ -19,10 +19,10 @@ class baseAbsMachine(ABC):
         self._id = baseAbsMachine.count
         self._machine_type: MachineType = machine_type
         self._status: MachineStatus = MachineStatus.OFF
-        self._running: Task = None
+        self._running_task: Task = None
         self._throughput: float = 0
-        self._availableTime: float = 0
-        self._energyConsumption = {
+        self._available_time: float = 0
+        self._energy_consumption = {
             'idle': 0,
             'working': 0,
             'wasted': 0
@@ -49,14 +49,14 @@ class baseAbsMachine(ABC):
         self._status = machine_status
 
     @property
-    def running(self) -> Task:
-        return self._running
+    def running_task(self) -> Task:
+        return self._running_task
 
-    @running.setter
-    def running(self, task: Task):
+    @running_task.setter
+    def running_task(self, task: Task):
         if not isinstance(task, Task):
             raise TypeError('Task is unknown')
-        self._running = task
+        self._running_task = task
 
     @property
     def throughput(self) -> float:
@@ -71,48 +71,36 @@ class baseAbsMachine(ABC):
         self._throughput = throughput
 
     @property
-    def availableTime(self) -> float:
-        return self._availableTime
+    def available_time(self) -> float:
+        return self._available_time
 
-    @availableTime.setter
-    def availableTime(self, availableTime: float):
-        if not isinstance(availableTime, float):
+    @available_time.setter
+    def available_time(self, available_time: float):
+        if not isinstance(available_time, float):
             raise TypeError('Available time must be a float value')
-        elif availableTime < 0:
+        elif available_time < 0:
             raise ValueError('Available time cannot be a negative value')
-        self._availableTime = availableTime
+        self._available_time = available_time
 
     @property
-    def energyConsumption(self) -> dict:
-        return self._energyConsumption
+    def energy_consumption(self) -> dict:
+        return self._energy_consumption
 
-    @energyConsumption.setter
-    def energyConsumption(self, energyConsumption: dict):
-        if not isinstance(energyConsumption, dict):
+    @energy_consumption.setter
+    def energy_consumption(self, energy_consumption: dict):
+        if not isinstance(energy_consumption, dict):
             raise TypeError('Energy consumption must be a dictionary')
-        self._energyConsumption = energyConsumption
-
-    @property
-    def queueSize(self) -> int:
-        return self._queueSize
-
-    @queueSize.setter
-    def queueSize(self, queueSize: int):
-        if not isinstance(queueSize, int):
-            raise TypeError('Queue size must be an integer')
-        elif queueSize < 0:
-            raise ValueError('Queue size cannot be a negative value')
-        self._queueSize = queueSize
+        self._energy_consumption = energy_consumption
 
     def start(self):
         self.status = MachineStatus.IDLE
 
     def reset(self):
         self.status = MachineStatus.IDLE
-        self.running = None
+        self.running_task = None
         self.throughput = 0
-        self.availableTime = 0
-        self.energyConsumption = {
+        self.available_time = 0
+        self.energy_consumption = {
             'idle': 0,
             'working': 0,
             'wasted': 0
@@ -125,10 +113,10 @@ class baseAbsMachine(ABC):
         return {
             'machine_type': self.machine_type,
             'status': self.status,
-            'running': self.running,
+            'running_task': self.running_task,
             'throughput': self.throughput,
-            'availableTime': self.availableTime,
-            'energyConsumption': self.energyConsumption
+            'available_time': self.available_time,
+            'energy_consumption': self.energy_consumption
             }
 
     def shutdown(self):

@@ -27,7 +27,7 @@ class Machine:
 
         if self.status != MachineStatus.IDLE:
             raise RuntimeError('Machine is not idle')
-        if self.running is not None:
+        if self.running_task is not None:
             raise RuntimeError('Machine is already running a task')
 
         self.completion_time = Clock.time().value +\
@@ -36,13 +36,13 @@ class Machine:
         if Clock.time().value > task.hard_deadline:
             EventQueue.add(Event(Clock.time(), EventTypes.DROPPED, task))
             self.completion_time = Clock.time().value
-            self.running = task
+            self.running_task = task
             return 0
 
         elif self.completion_time > task.hard_deadline:
             EventQueue.add(Event(task.hard_deadline, EventTypes.DROPPED, task))
             self.completion_time = task.hard_deadline
-            self.running = task
+            self.running_task = task
             return 0
 
         else:
@@ -51,7 +51,7 @@ class Machine:
                         time_share + Clock.time().value,
                         EventTypes.DEFERRED,
                         task))
-                self.running = task
+                self.running_task = task
                 self.status = MachineStatus.WORKING
                 return time_share + Clock.time().value
             else:
@@ -59,27 +59,27 @@ class Machine:
                     Clock.time(),
                     EventTypes.COMPLETION,
                     task))
-                self.running = task
+                self.running_task = task
                 self.status = MachineStatus.WORKING
                 return self.completion_time
 
     def preempt(self) -> Task:
         self.status = MachineStatus.IDLE
-        task_to_be_preempted = self.running
+        task_to_be_preempted = self.running_task
         task_to_be_preempted.status = TaskStatus.PREEMPTED
-        self.running = None
+        self.running_task = None
         return task_to_be_preempted
 
     def drop(self) -> Task:
         self.status = MachineStatus.IDLE
-        task_to_be_dropped = self.running
+        task_to_be_dropped = self.running_task
         task_to_be_dropped.status = TaskStatus.DROPPED
-        self.running = None
+        self.running_task = None
         return task_to_be_dropped
 
     def terminate(self) -> Task:
         self.status = MachineStatus.IDLE
-        task_to_be_terminated = self.running
+        task_to_be_terminated = self.running_task
         task_to_be_terminated.status = TaskStatus.CANCELLED
-        self.running = None
+        self.running_task = None
         return task_to_be_terminated

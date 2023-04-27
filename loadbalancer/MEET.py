@@ -3,8 +3,8 @@ TODO: Add description
 
 """
 
-from loadbalancer.base_loadbalancer import BaseLoadBalancer
-import config.config as config
+from config import config
+from loadbalancer import BaseLoadBalancer
 import numpy as np
 
 
@@ -28,7 +28,8 @@ class MEET(BaseLoadBalancer):
         ties = []
         provisional_maps = []
         for machine in config.machines:
-            score = task.estimated_time[machine.type.name]
+            score = task.get_exec_time(machine.type.name)
+            # TODO: add get_exec_time to task.py
             provisional_maps.append((score, machine.id))
 
         min_score = min(provisional_maps, key=lambda x: x[0])[0]
@@ -37,7 +38,7 @@ class MEET(BaseLoadBalancer):
         np.random.seed(task.id)
         selected_machine_idx = int(np.random.choice(ties[:, 1]))
         selected_machine = config.machines[selected_machine_idx]
-
+        # check implementation of assign_task_to_machine
         self.assign_task_to_machine(task, selected_machine)
         self.queue.remove(task)
         return selected_machine

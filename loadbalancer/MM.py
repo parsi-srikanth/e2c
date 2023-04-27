@@ -3,8 +3,8 @@ TODO: Add description
 
 """
 
-from loadbalancer.base_loadbalancer import BaseLoadBalancer
-import config.config as config
+from config import config
+from loadbalancer import BaseLoadBalancer
 
 
 class MM(BaseLoadBalancer):

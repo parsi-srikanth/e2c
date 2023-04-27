@@ -2,8 +2,8 @@
 TODO: Add Description
 """
 
-from loadbalancer.base_loadbalancer import BaseLoadBalancer
-import config.config as config
+from config import config
+from loadbalancer import BaseLoadBalancer
 import numpy as np
 
 
@@ -27,6 +27,7 @@ class MECT(BaseLoadBalancer):
         provisional_maps = []
         for machine in config.machines:
             score = machine.provisional_map(task)
+            # TODO: Add provisional_map to machine/base_abs_machine.py
             provisional_maps.append((score, machine.id))
 
         min_score = min(provisional_maps, key=lambda x: x[0])[0]

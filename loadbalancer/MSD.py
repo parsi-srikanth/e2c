@@ -2,11 +2,11 @@
 TODO: Add Description
 """
 
-from utils.base_scheduler import BaseScheduler
-import utils.config as config
+from config import config
+from loadbalancer import BaseLoadBalancer
 
 
-class MSD(BaseScheduler):
+class MSD(BaseLoadBalancer):
     def __init__(self, total_no_of_tasks: int):
         super().__init__()
         self.name(self, 'MSD')

@@ -2,8 +2,8 @@
 TODO: Add Description
 """
 
-from loadbalancer.base_loadbalancer import BaseLoadBalancer
-import config.config as config
+from config import config
+from loadbalancer import BaseLoadBalancer
 
 
 class MMU(BaseLoadBalancer):
