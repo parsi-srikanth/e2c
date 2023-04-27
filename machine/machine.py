@@ -13,8 +13,8 @@ from task import Task, TaskStatus
 class Machine:
     def __init__(self):
         super().__init__()
-        self.energyModel: EnergyModel = None
-        self.completionTime = 0
+        self.energy_model: EnergyModel = None
+        self.completion_time = 0
         self.start()
 
     def execute(self, task: Task, time_share: float) -> float:
@@ -30,23 +30,23 @@ class Machine:
         if self.running is not None:
             raise RuntimeError('Machine is already running a task')
 
-        self.completionTime = Clock.time().value +\
+        self.completion_time = Clock.time().value +\
             task.get_exec_time(self.machine_type)
 
         if Clock.time().value > task.hard_deadline:
             EventQueue.add(Event(Clock.time(), EventTypes.DROPPED, task))
-            self.completionTime = Clock.time().value
+            self.completion_time = Clock.time().value
             self.running = task
             return 0
 
-        elif self.completionTime > task.hard_deadline:
+        elif self.completion_time > task.hard_deadline:
             EventQueue.add(Event(task.hard_deadline, EventTypes.DROPPED, task))
-            self.completionTime = task.hard_deadline
+            self.completion_time = task.hard_deadline
             self.running = task
             return 0
 
         else:
-            if self.completionTime > time_share + Clock.time().value:
+            if self.completion_time > time_share + Clock.time().value:
                 EventQueue.add(Event(
                         time_share + Clock.time().value,
                         EventTypes.DEFERRED,
@@ -61,25 +61,25 @@ class Machine:
                     task))
                 self.running = task
                 self.status = MachineStatus.WORKING
-                return self.completionTime
+                return self.completion_time
 
     def preempt(self) -> Task:
         self.status = MachineStatus.IDLE
-        taskToBePreempted = self.running
-        taskToBePreempted.status = TaskStatus.Preempted
+        task_to_be_preempted = self.running
+        task_to_be_preempted.status = TaskStatus.PREEMPTED
         self.running = None
-        return taskToBePreempted
+        return task_to_be_preempted
 
     def drop(self) -> Task:
         self.status = MachineStatus.IDLE
-        taskToBeDropped = self.running
-        taskToBeDropped.status = 'dropped'
+        task_to_be_dropped = self.running
+        task_to_be_dropped.status = TaskStatus.DROPPED
         self.running = None
-        return taskToBeDropped
+        return task_to_be_dropped
 
     def terminate(self) -> Task:
         self.status = MachineStatus.IDLE
-        taskToBeTerminated = self.running
-        taskToBeTerminated.status = 'cancelled'
+        task_to_be_terminated = self.running
+        task_to_be_terminated.status = TaskStatus.CANCELLED
         self.running = None
-        return taskToBeTerminated
+        return task_to_be_terminated
