@@ -64,7 +64,7 @@ class baseAbsLoadBalancer(ABC):
         return task_to_be_actioned
 
     def defer(self, task):
-        if clock.time() > task.deadline:
+        if clock.time() > task.hard_deadline:
             self.drop(task)
             return 1
         self.task_to_be_actioned = None
@@ -97,7 +97,7 @@ class baseAbsLoadBalancer(ABC):
 
     def prune(self):
         for task in self.queue.list:
-            if clock.time() > task.deadline:
+            if clock.time() > task.hard_deadline:
                 task.status = TaskStatus.CANCELLED
                 task.drop_time = clock.time()
                 self.stats['dropped'].append(task)
