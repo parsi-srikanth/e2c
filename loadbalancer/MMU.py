@@ -12,9 +12,8 @@ class MMU(BaseLoadBalancer):
         self.name(self, 'MMU')
         self.total_no_of_tasks(self, total_no_of_tasks)
 
-    def decide(self):
+    def generate_provisional_map(self):
         provisional_map = []
-        index = 0
         self.prune()
         for task in self.queue.list:
             min_ct = float('inf')
@@ -30,17 +29,16 @@ class MMU(BaseLoadBalancer):
             else:
                 urgency = 1 / slack
             provisional_map.append(
-                (task, min_ct, min_ct_machine, urgency, index))
-            index += 1
+                (task, min_ct, min_ct_machine, urgency))
+        return provisional_map
 
+    def decide(self):
+        provisional_map = self.generate_provisional_map()
         # Sorting the provisional map by urgency (in descending order)
         # and then by minimum completion time (in ascending order).
         for task, _, assigned_machine, _, _ in \
                 sorted(provisional_map, key=lambda x: (-x[3], x[1])):
             if assigned_machine is not None:
-                index = self.queue.list.index(task)
-                task = self.queue.choose_task(index)
                 self.assign_task_to_machine(task, assigned_machine)
                 return assigned_machine
-
         return None

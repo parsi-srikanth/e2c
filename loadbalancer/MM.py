@@ -33,8 +33,6 @@ class MM(BaseLoadBalancer):
         for task, _, assigned_machine in \
                 sorted(provisional_map, key=lambda x: x[1]):
             if assigned_machine is not None:
-                index = self.queue.list.index(task)
-                task = self.queue.choose_task(index)
                 self.assign_task_to_machine(task, assigned_machine)
                 return assigned_machine
         return None
