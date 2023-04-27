@@ -1,6 +1,6 @@
 """
 
-TODO: implement get_exec_time() method
+TODO: add description
 
 """
 
