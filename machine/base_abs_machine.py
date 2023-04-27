@@ -19,10 +19,9 @@ class baseAbsMachine(ABC):
         self._id = baseAbsMachine.count
         self._machine_type: MachineType = machine_type
         self._status: MachineStatus = MachineStatus.OFF
-        self._running: Task = None  # why do we need a task here?
+        self._running: Task = None
         self._throughput: float = 0
         self._availableTime: float = 0
-        self._queueSize: int = 0  # This is needed but not in class diagram
         self._energyConsumption = {
             'idle': 0,
             'working': 0,
@@ -106,10 +105,10 @@ class baseAbsMachine(ABC):
         self._queueSize = queueSize
 
     def start(self):
-        self.status = MachineStatus.WORKING
+        self.status = MachineStatus.IDLE
 
     def reset(self):
-        self.status = MachineStatus.OFF
+        self.status = MachineStatus.IDLE
         self.running = None
         self.throughput = 0
         self.availableTime = 0
@@ -122,38 +121,6 @@ class baseAbsMachine(ABC):
     def is_working(self) -> bool:
         return self.status == MachineStatus.WORKING
 
-    def execute(self, task: Task, time_share: float) -> float:
-        if not isinstance(task, Task):
-            raise TypeError('Task is unknown')
-        if not isinstance(time_share, float):
-            raise TypeError('Time share must be a float value')
-        elif time_share < 0:
-            raise ValueError('Time share cannot be a negative value')
-
-        self.running = task
-        self.throughput = time_share  # how is this calculated?
-        self.availableTime = time_share  # what is this?
-        self.status = MachineStatus.WORKING
-        return time_share
-
-    def preempt(self):  # what should be the return type?
-        self.status = MachineStatus.IDLE
-        self.running = None
-        self.throughput = 0
-        self.availableTime = 0
-
-    def drop(self):  # what should be the return type?
-        self.status = MachineStatus.IDLE
-        self.running = None
-        self.throughput = 0
-        self.availableTime = 0
-
-    def terminate(self):  # what should be the return type?
-        self.status = MachineStatus.OFF
-        self.running = None
-        self.throughput = 0
-        self.availableTime = 0
-
     def info(self) -> dict:
         return {
             'machine_type': self.machine_type,
@@ -164,5 +131,5 @@ class baseAbsMachine(ABC):
             'energyConsumption': self.energyConsumption
             }
 
-    def shutdown(self):  # why is this needed we already have terminate?
+    def shutdown(self):
         self.status = MachineStatus.OFF

@@ -51,7 +51,7 @@ class Event:
     @assigned_task.setter
     def assigned_task(self, assigned_task):
         if not isinstance(assigned_task, Task):
-            raise TypeError('The assigned task must be of' 
+            raise TypeError('The assigned task must be of'
                             'Task object')
             self._assigned_task = assigned_task
 
