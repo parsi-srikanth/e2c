@@ -9,5 +9,5 @@ from enum import Enum, unique
 
 @unique
 class UrgencyLevel(Enum):
-    BESTEFFORT = 0
-    URGENT = 1
+    BESTEFFORT = 1
+    URGENT = 2
