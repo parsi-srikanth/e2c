@@ -27,7 +27,6 @@ class MECT(BaseLoadBalancer):
         provisional_maps = []
         for machine in config.machines:
             score = machine.compute_completion_time(task)
-            # TODO: Add compute_completion_time to machine/base_abs_machine.py
             provisional_maps.append((score, machine.id))
 
         min_score = min(provisional_maps, key=lambda x: x[0])[0]

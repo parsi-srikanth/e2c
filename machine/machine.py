@@ -86,3 +86,12 @@ class Machine:
         task_to_be_terminated.status = TaskStatus.CANCELLED
         self.running_task = None
         return task_to_be_terminated
+
+    def compute_completion_time(self, task) -> float:
+        if not isinstance(task, Task):
+            raise TypeError('Task is unknown')
+        for t in self.queue:
+            self.completion_time += t.get_exec_time(self.machine_type)
+
+        return task.get_exec_time(self.machine_type) + Clock.time().value +\
+            self.completion_time
