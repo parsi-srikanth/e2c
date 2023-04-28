@@ -9,7 +9,7 @@ from urgency_level import UrgencyLevel
 
 class TaskType(ABC):
     """
-    
+
     TODO: add description
 
     """
@@ -21,11 +21,11 @@ class TaskType(ABC):
         self._name: str = f'T-{self.id}'
         self._urgency: UrgencyLevel = urgency
         self._hard_deadline: float = hard_deadline
-    
+
     @property
     def name(self) -> str:
         return self._name
-    
+
     @name.setter
     def name(self, name):
         if name in ['', ' ']:
@@ -43,7 +43,7 @@ class TaskType(ABC):
             raise ValueError('Urgency level of the task type must'
                              'be of type UrgencyLevel')
         self._urgency = urgency
-    
+
     @property
     def hard_deadline(self) -> float:
         return self._hard_deadline
