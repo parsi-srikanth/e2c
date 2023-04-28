@@ -8,6 +8,7 @@ from event import Event, EventTypes, EventQueue
 from machine.machine_status import MachineStatus
 from power import EnergyModel
 from task import Task, TaskStatus
+import queue as Queue
 
 
 class Machine:
@@ -15,6 +16,8 @@ class Machine:
         super().__init__()
         self.energy_model: EnergyModel = None
         self.completion_time = 0
+        self.running_task: Task = None
+        self.queue = Queue()
         self.start()
 
     def execute(self, task: Task, time_share: float) -> float:
