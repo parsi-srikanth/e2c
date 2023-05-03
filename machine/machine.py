@@ -52,7 +52,7 @@ class Machine:
             if self.completion_time > time_share + Clock.time().value:
                 EventQueue.add(Event(
                         time_share + Clock.time().value,
-                        EventTypes.DEFERRED,
+                        EventTypes.PREEMPTION,
                         task))
                 self.running_task = task
                 self.status = MachineStatus.WORKING

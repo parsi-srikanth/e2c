@@ -14,3 +14,4 @@ class EventTypes(Enum):
     DROPPED = 3
     DEFERRED = 4
     OFFLOADED = 5
+    PREEMPTION = 6
