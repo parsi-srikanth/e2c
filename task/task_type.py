@@ -3,57 +3,47 @@
 TODO: add description
 
 """
-from abc import ABC
-from urgency_level import UrgencyLevel
+from task.task_urgency import TaskUrgency
 
 
-class TaskType(ABC):
+class TaskType:
     """
-
     TODO: add description
-
     """
-    count = 0
+    id: int = 0
 
-    def __init__(self, urgency, hard_deadline) -> None:
-        TaskType.count += 1
-        self.id: int = TaskType.count
+    def __init__(self) -> None:
+        TaskType.id += 1
+        self.id = TaskType.id
         self._name: str = f'T-{self.id}'
-        self._urgency: UrgencyLevel = urgency
-        self._hard_deadline: float = hard_deadline
+        self._urgency: TaskUrgency = 0.0
+        self._deadline: float = float('inf')
+
+    @classmethod
+    def get_id(cls) -> int:
+        return cls.id
 
     @property
     def name(self) -> str:
         return self._name
 
     @name.setter
-    def name(self, name):
+    def name(self, name) -> None:
         if name in ['', ' ']:
             raise ValueError('Task type name cannot be either empty or'
                              'space  string ')
         self._name = name
 
     @property
-    def urgency(self) -> UrgencyLevel:
-        return self._urgency
+    def deadline(self) -> float:
+        return self._deadline
 
-    @urgency.setter
-    def urgency(self, urgency):
-        if not isinstance(urgency, UrgencyLevel):
-            raise ValueError('Urgency level of the task type must'
-                             'be of type UrgencyLevel')
-        self._urgency = urgency
-
-    @property
-    def hard_deadline(self) -> float:
-        return self._hard_deadline
-
-    @hard_deadline.setter
-    def hard_deadline(self, hard_deadline):
-        if not isinstance(hard_deadline, float):
-            raise ValueError('Hard deadline of the task type must'
-                             'be a float')
-        elif hard_deadline < 0:
-            raise ValueError('Hard deadline of the task type cannot'
-                             'be a negative value')
-        self._hard_deadline = hard_deadline
+    @deadline.setter
+    def deadline(self, deadline) -> None:
+        if not isinstance(deadline, float):
+            raise TypeError('Deadline of the task type must be a'
+                            'float value')
+        elif deadline < 0:
+            raise ValueError('Deadline of the task type cannot be'
+                             'a negative value')
+        self._idle_power = deadline

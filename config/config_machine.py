@@ -7,11 +7,11 @@ from rich.table import Table
 import sys
 
 
-def config_machines(args, config, console):   
+def config_machines(args, config, console):
     if args.add_machine:
         new_config = add_machine(args, config, console)
     elif args.modify_machine:
-        new_config = modify_machine(args, config, console)    
+        new_config = modify_machine(args, config, console)
     elif args.delete_machine:
         new_config = delete_machine(args, config, console)
 
@@ -52,7 +52,7 @@ def add_machine(args, config, console):
     console.rule(f'[bold]::: Adding {args.add_machine} New Machine :::[/bold]',
                  style='blue')
     machine = dict()
-    for i in range(int(args.add_machine)):        
+    for i in range(int(args.add_machine)):
         name = Prompt.ask('\n[bold green]name[/bold green]',
                           default=f'M{len(machines)+i+1}')
         if name in machines.keys():
@@ -106,18 +106,18 @@ def modify_machine(args, config, console):
             for task, value in tasks.items():
                 print(value['eet'])
                 eet_machine_name = value['eet'].pop(machine_name)
-                tasks[task]['eet'].update({new_name: eet_machine_name})                
-            machine_name = new_name      
+                tasks[task]['eet'].update({new_name: eet_machine_name})
+            machine_name = new_name
         elif attr not in attrs.keys():
             raise KeyError(f'Attribute not found: {attr}')
-        elif attrs[attr]['type'] == 'float':            
+        elif attrs[attr]['type'] == 'float':
             machine[attr] = FloatPrompt.ask(f'[bold green]{attr}[/bold green]')
         elif attrs[attr]['type'] == 'int':
             machine[attr] = IntPrompt.ask(f'[bold green]{attr}[/bold green]')
         else:
             machine[attr] = Prompt.ask(f'[bold green]{attr}[/bold green]')
     machines[machine_name] = machine
-    config['system parameters']['tiers'][args.tier]['machines'] = machines   
+    config['system parameters']['tiers'][args.tier]['machines'] = machines
     return config
 
 

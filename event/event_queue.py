@@ -1,32 +1,37 @@
-from collections import deque
-from .event import Event
+"""
+TODO: Add description
+"""
+from event.event import Event
+from utils.descriptors import EventList
+
+import heapq
 
 
 class EventQueue:
-    """A priority queue for storing and managing events"""
+    """
+    TODO: Add description
+    """
 
-    def __init__(self):
-        self.events = deque()
+    event_list = EventList()
+
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(EventQueue, cls).__new__(cls)
+        return cls.instance
 
     def add(self, event):
-        """Insert an event into the event queue"""
         if isinstance(event, Event):
-            self.events.append(event)
+            heapq.heappush(self.event_list, event)
 
     def pop(self):
-        """Remove and return the event with the smallest time"""
-        if self.events:
-            return self.events.popleft()
+        if self.event_list:
+            return heapq.heappop(self.event_list)
         else:
-            return None
+            return Event(None, None, None)
 
-    def remove(self, event: Event):
-        """Remove an event from the event queue"""
-        try:
-            self.events.remove(event)
-        except ValueError:
-            pass
+    def remove(self, event):
+        self.event_list.remove(event)
+        heapq.heapify(self.event_list)
 
-    def clear(self):
-        """Clear the event queue"""
-        self.events.clear()
+    def reset(self):
+        self.event_list = EventList()

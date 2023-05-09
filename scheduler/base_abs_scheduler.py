@@ -1,12 +1,10 @@
 """
 TODO: Add description
 """
-from abs import ABC, abstractmethod
-
-from clock import Clock
+from utils.descriptors import QTask
 from task.task import Task
-# from somewhere import Queue
 from machine.machine import Machine
+from abc import ABC, abstractmethod
 
 
 class baseAbsScheduler(ABC):
@@ -14,71 +12,64 @@ class baseAbsScheduler(ABC):
     TODO: Class description
     """
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, machine: Machine, timeslice: float = float('inf'),
+                 qsize=0) -> None:
         super().__init__()
-        self._name = name
-        # self._stats =
-        # self._queue =
+        self.name = None
+        self.queue = QTask(maxsize=qsize)
+        if not isinstance(machine, Machine):
+            raise TypeError("Machine must be of type Machine")
+        self._machine = machine
+        if not isinstance(timeslice, float):
+            raise TypeError("Timeslice must be of type float")
+        elif timeslice <= 0:
+            raise ValueError("Timeslice must be positive")
+        self._time_slice = timeslice
 
     @property
-    def name(self) -> str:
-        return self._name    
-    
-    @name.setter
-    def name(self, name: str):
-        if not isinstance(name, str):
-            raise TypeError('Name must be a string')
-        self._name = str(name)
+    def machine(self):
+        return self._machine
+
+    @machine.setter
+    def machine(self, machine):
+        if not isinstance(machine, Machine):
+            raise TypeError("Machine must be of type Machine")
+        self._machine = machine
 
     @property
-    def stats(self) -> dict:
-        return self._stats
+    def time_slice(self):
+        return self._time_slice
 
-    @stats.setter
-    def stats(self, stats: dict):
-        if not isinstance(stats, dict):
-            raise TypeError('Stats must be a dictionary')
-        self._stats = stats
+    @time_slice.setter
+    def time_slice(self, timeslice):
+        if not isinstance(timeslice, float):
+            raise TypeError("Timeslice must be of type float")
+        elif timeslice <= 0:
+            raise ValueError("Timeslice must be positive")
+        self._time_slice = timeslice
 
-    @property
-    def queue(self) -> Queue:
-        return self._queue
-    
-    @queue.setter
-    def queue(self, queue: Queue):
-        if not isinstance(queue, Queue):
-            raise TypeError('Queue must be a Queue Type')
-        self._queue = queue
+    def is_empty(self):
+        return self.queue.empty()
 
+    def is_full(self):
+        return self.queue.full()
 
+    @abstractmethod
+    def schedule(self):
+        raise NotImplementedError
 
-    def choose(self) -> Task:
-        #for fcfs
-        task = Queue.pop()
-    
-    def admit(self, task: Task) -> bool:
-        pass
-    
+    @abstractmethod
+    def admit(self, task: Task) -> None:
+        raise NotImplementedError
 
-    def allocate(self, task: Task) -> Machine:
-        machine.running = task
-        
+    @abstractmethod
+    def pop(self) -> Task:
+        raise NotImplementedError
 
-    def schedule(self, task: Task):  
-        task = self.choose()
-        if machine.is_empty():
-            machine = self.allocate(task)
-    
-    def defer(self, task: Task):
-        pass
+    @abstractmethod
+    def allocate(self, task: Task) -> None:
+        raise NotImplementedError
 
-    def prune(self) ->list[Task]:
-        pass
-
-    def is_empty(self) -> bool:
-        if machine.running:        #how to see if machine is empty? i dont know how to access "machine", should it be defined in the init?
-            return False
-        return True
-
-    def q_completion_time(self) -> float:
-        pass
+    @abstractmethod
+    def q_expec_completion_time(self):
+        raise NotImplementedError

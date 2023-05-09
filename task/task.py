@@ -3,197 +3,185 @@
 TODO: add description
 
 """
-
-from task_type import TaskType
-from urgency_level import UrgencyLevel
+from task.task_status import TaskStatus
+from task.task_type import TaskType
+from utils.descriptors import FloatDict, FloatDictFloatList, FloatList
 from machine.machine import Machine
-from typing import Dict #i think i need to import this for type annotating _ps_time, but remove if unneeded
-                                       
+
+
 class Task:
     """
-    
     TODO: add description
-
     """
-        
-    count = 0
+    id: int = 0
 
-    # def __init__(self, type: TaskType, hard_deadline: TaskType.hard_deadline, urgency: UrgencyLevel, assigned_machine: Machine):
-    def __init__(self, type: TaskType, urgency: UrgencyLevel):
-        Task.count += 1
-        self.id: int = Task.count
-        self._type: TaskType = type
-        self._exp_exec_time: list[float] 
-        self._sim_exec_time: list[float]
-        # self._hard_deadline: float = hard_deadline
-        self._hard_deadline: float
-        self._soft_deadline: float 
-        self._urgency : UrgencyLevel = urgency
-        self._ps_time: Dict[str, float] = {  
-                        "arrival",
-                        "start",
-                        "preemption",
-                        "completion",
-                        "cancel",
-                        "drop"
-                        }
-        # self._assigned_machine: Machine/None = assigned_machine
-        self._assigned_machine: Machine/None
-        self._consumed_energy: float 
-        self._wasted_energy: float 
-        self._deferred: int 
-        self._preempted: int
+    def __init__(self, task_type: TaskType, arrival_time: float) -> None:
+        Task.id += 1
+        self._id = Task.id
+        self._type: TaskType = task_type
+        self._status: TaskStatus = TaskStatus.ARRIVING
+        self._deferred_count: int = 0
+        self._preempted_count: int = 0
+        self._time_pinpoint: FloatDictFloatList = FloatDictFloatList({
+                                    'arrival': FloatList([arrival_time]),
+                                    'start': FloatList([float('inf')]),
+                                    'preeemption': FloatList([float('inf')]),
+                                    'completion': FloatList([float('inf')]),
+                                    'cancelation': FloatList([float('inf')]),
+                                    'dropping': FloatList([float('inf')]),
+                                    })
+        self._execution_times: FloatDict = FloatDict()
+        self._expected_execution_times: FloatDict = FloatDict()
+        self._remaining_exec: float = None
+        self._assigned_machine: Machine = None
+        self._energy_usuage: float = 0.0
+        self._wastaed_energy: bool = False
+        self.deadline: float = (self._time_pinpoint['arrival'] +
+                                self._type.deadline)
 
+    @property
+    def id(self) -> int:
+        return self._id
+
+    @id.setter
+    def id(self, id) -> None:
+        if not isinstance(id, int):
+            raise TypeError('Task ID must be an integer')
+        self._id = id
 
     @property
     def type(self) -> TaskType:
         return self._type
 
     @type.setter
-    def type(self, type):
-        if not isinstance(type, TaskType):
-            raise ValueError('Task type of the task must'
-                             'be of type TaskType')
-        self._type = type
+    def type(self, task_type: TaskType) -> None:
+        if not isinstance(task_type, TaskType):
+            raise TypeError('Type of the task must be a'
+                            'TaskType value')
+        self._type = task_type
 
     @property
-    def exp_exec_time(self) -> float:
-        return self._exp_exec_time
+    def status(self) -> TaskStatus:
+        return self._status
 
-    @exp_exec_time.setter
-    def exp_exec_time(self, exp_exec_time):
-        if not isinstance(exp_exec_time, float):
-            raise ValueError('Expected execution time of the task must'
-                             'be a float')
-        elif exp_exec_time < 0:
-            raise ValueError('Expected execution time of the task cannot'
-                             'be a negative value')
-        self._exp_exec_time = exp_exec_time
+    @status.setter
+    def status(self, status: TaskStatus) -> None:
+        if not isinstance(status, TaskStatus):
+            raise TypeError('Status of the task must be a'
+                            'TaskStatus value')
+        self._status = status
 
     @property
-    def sim_exec_time(self) -> float:
-        return self._sim_exec_time
+    def deferred_count(self) -> int:
+        return self._deferred_count
 
-    @sim_exec_time.setter
-    def sim_exec_time(self, sim_exec_time):
-        if not isinstance(sim_exec_time, float):
-            raise ValueError('Expected execution time of the task must'
-                             'be a float')
-        elif sim_exec_time < 0:
-            raise ValueError('Expected execution time of the task cannot'
-                             'be a negative value')
-        self._sim_exec_time = sim_exec_time
-    
-    @property
-    def hard_deadline(self) -> float:
-        return self._hard_deadline
-
-    @hard_deadline.setter
-    def hard_deadline(self, hard_deadline):
-        if not isinstance(hard_deadline, float):
-            raise ValueError('Hard deadline of the task must'
-                             'be a float')
-        elif hard_deadline < 0:
-            raise ValueError('Hard deadline of the task cannot'
-                             'be a negative value')
-        self._hard_deadline = hard_deadline
+    @deferred_count.setter
+    def deferred_count(self, deferred_count) -> None:
+        if not isinstance(deferred_count, int):
+            raise TypeError('Deferred count of the task must be an'
+                            'integer value')
+        elif deferred_count < self._deferred_count:
+            raise ValueError('Deferred count of the task cannot be'
+                             'set to a value less than the current value')
+        self._deferred_count = deferred_count
 
     @property
-    def soft_deadline(self) -> float:
-        return self._soft_deadline
+    def preempted_count(self) -> int:
+        return self._preempted_count
 
-    @soft_deadline.setter
-    def soft_deadline(self, soft_deadline):
-        if not isinstance(soft_deadline, float):
-            raise ValueError('Soft deadline of the task must'
-                             'be a float')
-        elif soft_deadline < 0:
-            raise ValueError('Soft deadline of the task cannot'
-                             'be a negative value')
-        self._soft_deadline = soft_deadline
-
-    @property
-    def urgency(self) -> UrgencyLevel:
-        return self._urgency
-
-    @urgency.setter
-    def urgency(self, urgency):
-        if not isinstance(urgency, UrgencyLevel):
-            raise ValueError('Urgency level of the task must'
-                             'be of type UrgencyLevel')
-        self._urgency = urgency
+    @preempted_count.setter
+    def preempted_count(self, preempted_count) -> None:
+        if not isinstance(preempted_count, int):
+            raise TypeError('Preempted count of the task must be an'
+                            'integer value')
+        elif preempted_count < self._preempted_count:
+            raise ValueError('Preempted count of the task cannot be'
+                             'set to a value less than the current value')
+        self._preempted_count = preempted_count
 
     @property
-    def ps_time(self) -> Dict[str, float]:
-        return self._ps_time
+    def time_pinpoint(self) -> FloatDict:
+        return self._time_pinpoint
 
-    @ps_time.setter
-    def ps_time(self, ps_time):
-        if not isinstance(ps_time, Dict[str, float]):
-            raise ValueError('PS time of the task must'      #what does "ps" stand for?
-                             'be of type Dict[str, float]')
-        elif any(value < 0 for value in ps_time.values()):
-            raise ValueError('PS times of the task cannot'
-                             'be negative values')
-        self._ps_time = ps_time
+    @time_pinpoint.setter
+    def time_pinpoint(self, time_pinpoint: FloatDict) -> None:
+        if not isinstance(time_pinpoint, dict):
+            raise TypeError('Time pinpoint of the task must be a'
+                            'FloatDict value')
+        self._time_pinpoint = FloatDict(time_pinpoint)
 
     @property
-    def assigned_machine(self) -> Machine/None:
+    def execution_times(self) -> FloatDict:
+        return self._execution_times
+
+    @execution_times.setter
+    def execution_times(self, execution_times: FloatDict) -> None:
+        if not isinstance(execution_times, FloatDict):
+            raise TypeError('Execution times of the task must be a'
+                            'FloatDict value')
+        self._execution_times = FloatDict(execution_times)
+
+    @property
+    def expected_execution_times(self) -> FloatDict:
+        return self._expected_execution_times
+
+    @expected_execution_times.setter
+    def expected_execution_times(self,
+                                 expected_execution_times: FloatDict) -> None:
+        if not isinstance(expected_execution_times, FloatDict):
+            raise TypeError('Expected execution times of the task must be a'
+                            'FloatDict value')
+        self._expected_execution_times = FloatDict(expected_execution_times)
+
+    @property
+    def remaining_exec(self) -> float:
+        return self._remaining_exec
+
+    @remaining_exec.setter
+    def remaining_exec(self, remaining_exec: float) -> None:
+        if not (isinstance(remaining_exec, float) or None):
+            raise TypeError('Remaining execution time of the task must be a'
+                            'float value')
+        elif remaining_exec < 0:
+            raise ValueError('Remaining execution time of the task cannot be'
+                             'a negative value')
+        self._remaining_exec = remaining_exec
+
+    @property
+    def assigned_machine(self) -> Machine:
         return self._assigned_machine
 
     @assigned_machine.setter
-    def assigned_machine(self, assigned_machine):
-        if not isinstance(assigned_machine, Machine/None):
-            raise ValueError('Assigned machine of the task'
-                             'must be of type Machine or None')
+    def assigned_machine(self, assigned_machine: Machine) -> None:
+        if not isinstance(assigned_machine, Machine):
+            raise TypeError('Assigned machine of the task must be a'
+                            'Machine value')
         self._assigned_machine = assigned_machine
 
     @property
-    def consumed_energy(self) -> float:
-        return self._consumed_energy
+    def energy_usuage(self) -> float:
+        return self._energy_usuage
 
-    @consumed_energy.setter
-    def consumed_energy(self, consumed_energy):
-        if not isinstance(consumed_energy, float):
-            raise ValueError('Consumed energy of the task'
-                             'must be of type float')
-        elif consumed_energy < 0:
-            raise ValueError('Consumed energy of the task'
-                             'cannot be a negative value')
-        self._consumed_energy = consumed_energy
-
-    @property
-    def wasted_energy(self) -> float:
-        return self._wasted_energy
-
-    @wasted_energy.setter
-    def wasted_energy(self, wasted_energy):
-        if not isinstance(wasted_energy, float):
-            raise ValueError('Wasted energy of the task'
-                             'must be of type float')
-        elif wasted_energy < 0:
-            raise ValueError('Wasted energy of the task'
-                            'cannot be a negative value')
-        self._wasted_energy = wasted_energy
+    @energy_usuage.setter
+    def energy_usuage(self, energy_usuage: float) -> None:
+        if not isinstance(energy_usuage, float):
+            raise TypeError('Energy usuage of the task must be a'
+                            'float value')
+        elif energy_usuage < 0:
+            raise ValueError('Energy usuage of the task cannot be'
+                             'a negative value')
+        self._energy_usuage = energy_usuage
 
     @property
-    def deferred(self) -> int:
-        return self._deferred
+    def wastaed_energy(self) -> bool:
+        return self._wastaed_energy
 
-    @deferred.setter
-    def deferred(self, deferred):
-        if not isinstance(deferred, int):
-            raise ValueError('Deferred value of task'
-                             'must be of type int')
-        self._deferred = deferred
+    @wastaed_energy.setter
+    def wastaed_energy(self, wastaed_energy: bool) -> None:
+        if not isinstance(wastaed_energy, bool):
+            raise TypeError('Wastaed energy of the task must be a'
+                            'bool value')
+        self._wastaed_energy = wastaed_energy
 
-    @property
-    def preempted(self) -> int:
-        return self._preempted
-
-    @preempted.setter
-    def preempted(self, preempted) -> int:
-        if not isinstance(preempted, int):
-            raise ValueError('Preempted value of task'
-                             'must be of type int')
-        self._preempted = preempted
+    def __str__(self) -> str:
+        return f'{self._type.name}-{self.id}'

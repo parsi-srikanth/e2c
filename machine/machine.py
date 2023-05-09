@@ -3,95 +3,124 @@
 TODO: add description
 
 """
-from clock import Clock
-from event import Event, EventTypes, EventQueue
+from machine.base_abs_machine import baseAbsMachine
 from machine.machine_status import MachineStatus
-from power import EnergyModel
-from task import Task, TaskStatus
-import queue as Queue
+from machine.machine_type import MachineType
+from power.power_duration_model import PowerDurationModel
+from task.task import Task
+from task.task_status import TaskStatus
+from event.event import Event
+from event.event_type import EventType
+from event.event_queue import EventQueue
+from scheduler.FCFS import FCFS
 
 
-class Machine:
-    def __init__(self):
-        super().__init__()
-        self.energy_model: EnergyModel = None
-        self.completion_time = 0
-        self.running_task: Task = None
-        self.queue = Queue()
-        self.start()
+class Machine(baseAbsMachine):
+    """
+    TODO: Add description
+    """
 
-    def execute(self, task: Task, time_share: float) -> float:
-        if not isinstance(task, Task):
-            raise TypeError('Task is unknown')
-        if not isinstance(time_share, float):
-            raise TypeError('Time share must be a float value')
-        elif time_share < 0:
-            raise ValueError('Time share cannot be a negative value')
+    def __init__(self, machine_type: MachineType) -> None:
+        super().__init__(machine_type)
+        self.energy_model = PowerDurationModel(self)
+        self.scheduler = FCFS(self)
 
-        if self.status != MachineStatus.IDLE:
-            raise RuntimeError('Machine is not idle')
-        if self.running_task is not None:
-            raise RuntimeError('Machine is already running a task')
-
-        self.completion_time = Clock.time().value +\
-            task.get_exec_time(self.machine_type)
-
-        if Clock.time().value > task.hard_deadline:
-            EventQueue.add(Event(Clock.time(), EventTypes.DROPPED, task))
-            self.completion_time = Clock.time().value
-            self.running_task = task
-            return 0
-
-        elif self.completion_time > task.hard_deadline:
-            EventQueue.add(Event(task.hard_deadline, EventTypes.DROPPED, task))
-            self.completion_time = task.hard_deadline
-            self.running_task = task
-            return 0
-
+    def execute(self, task: Task, time_slice: float) -> None:
+        """
+        TODO: Add description
+        """
+        if self.status == MachineStatus.WORKING:
+            raise RuntimeError('Machine is already working')
+        elif self.status == MachineStatus.OFF:
+            raise RuntimeError('Machine is off')
+        self.running_task = task
+        task.status = TaskStatus.RUNNING
+        self._status = MachineStatus.WORKING
+        self.processed_tasks['executed'].append(task.id)
+        task.time_pinpoint['start'].append(self.clk.time)
+        if task.preempted_count == 0:
+            no_interupt_completion_time = (task.time_pinpoint['start'][-1] +
+                                           task.execution_times[self.type.id])
         else:
-            if self.completion_time > time_share + Clock.time().value:
-                EventQueue.add(Event(
-                        time_share + Clock.time().value,
-                        EventTypes.DEFERRED,
-                        task))
-                self.running_task = task
-                self.status = MachineStatus.WORKING
-                return time_share + Clock.time().value
+            no_interupt_completion_time = (task.time_pinpoint['start'][-1] +
+                                           task.remaining_exec)
+        if task.deadline <= task.time_pinpoint['start'][-1]:
+            event_type = EventType.DROPPING
+            event_time = task.time_pinpoint['start'][-1]
+        elif time_slice >= task.execution_times[self.type.id]:
+            if task.deadline >= no_interupt_completion_time:
+                event_type = EventType.COMPLETION
+                event_time = no_interupt_completion_time
             else:
-                EventQueue.add(Event(
-                    Clock.time(),
-                    EventTypes.COMPLETION,
-                    task))
-                self.running_task = task
-                self.status = MachineStatus.WORKING
-                return self.completion_time
+                event_type = EventType.DROPPING
+                event_time = task.deadline
+        elif time_slice < task.deadline - task.time_pinpoint['start'][-1]:
+            event_type = EventType.PREEMPTION
+            event_time = task.time_pinpoint['start'][-1] + time_slice
+        else:
+            event_type = EventType.DROPPING
+            event_time = task.deadline
 
-    def preempt(self) -> Task:
-        self.status = MachineStatus.IDLE
-        task_to_be_preempted = self.running_task
-        task_to_be_preempted.status = TaskStatus.PREEMPTED
+        event = Event(event_type, event_time, task)
+        EventQueue.add_event(event)
+        self.nxt_available_time = event_time
+
+    def drop(self) -> float:
+        """
+        TODO: Add description
+        """
+        task = self.running_task
         self.running_task = None
-        return task_to_be_preempted
-
-    def drop(self) -> Task:
+        self.processed_tasks['dropped'].append(task.id)
+        task.status = TaskStatus.DROPPED
         self.status = MachineStatus.IDLE
-        task_to_be_dropped = self.running_task
-        task_to_be_dropped.status = TaskStatus.DROPPED
-        self.running_task = None
-        return task_to_be_dropped
+        task.time_pinpoint['dropping'].append(self.clk.time)
+        duration = (task.time_pinpoint['dropping'][-1] -
+                    task.time_pinpoint['start'][-1])
+        energy_consumption = self.energy_model.dyn_energy_consump(duration)
+        self.energy_usuage['wasted'] += energy_consumption
 
-    def terminate(self) -> Task:
+        self.scheduler.scheduler()
+
+        return energy_consumption
+
+    def terminate(self) -> float:
+        """
+        TODO: Add description
+        """
+
+        task = self.running_task
+        self.running_task = None
+        self.processed_tasks['completed'].append(task.id)
+        task.status = TaskStatus.COMPLETED
         self.status = MachineStatus.IDLE
-        task_to_be_terminated = self.running_task
-        task_to_be_terminated.status = TaskStatus.CANCELLED
+        task.time_pinpoint['completion'].append(self.clk.time)
+        duration = (task.time_pinpoint['completion'][-1] -
+                    task.time_pinpoint['start'][-1])
+        energy_consumption = self.energy_model.dyn_energy_consump(duration)
+        self.energy_usuage['dynamic'] += energy_consumption
+
+        return energy_consumption
+
+    def preempt(self) -> float:
+        """
+        TODO: Add description
+        """
+
+        task = self.running_task
         self.running_task = None
-        return task_to_be_terminated
+        task.status = TaskStatus.PREEMPTED
+        self.status = MachineStatus.IDLE
+        task.time_pinpoint['preemption'].append(self.clk.time)
+        duration = (task.time_pinpoint['preemption'][-1] -
+                    task.time_pinpoint['start'][-1])
+        if task.preempted_count == 0:
+            task.remaining_exec = (task.execution_times[self.type.id] -
+                                   duration)
+        else:
+            task.remaining_exec = (task.remaining_exec -
+                                   duration)
+        energy_consumption = self.energy_model.dyn_energy_consump(duration)
+        task.preempted_count += 1
 
-    def compute_completion_time(self, task) -> float:
-        if not isinstance(task, Task):
-            raise TypeError('Task is unknown')
-        for t in self.queue:
-            self.completion_time += t.get_exec_time(self.machine_type)
-
-        return task.get_exec_time(self.machine_type) + Clock.time().value +\
-            self.completion_time
+        return energy_consumption
