@@ -2,11 +2,11 @@
 TODO: Add description
 """
 from abs import ABC
-from clock import clock
+from clock import Clock
 from config import config
 from event import Event, EventTypes
-import queue as Queue
 from Task import TaskStatus
+from utils.descriptors import IntDict, IntDictIntList, IntList, QTask
 
 
 class baseAbsLoadBalancer(ABC):
@@ -15,18 +15,19 @@ class baseAbsLoadBalancer(ABC):
     """
 
     task_to_be_actioned = None
+    clk: Clock = Clock()
 
-    def __init__(self) -> None:
+    def __init__(self, qsize=0) -> None:
         super().__init__()
-        self.queue = Queue()
+        self.queue = QTask(maxsize=qsize)
         self._name = 'base'
-        self._total_no_of_tasks = 0
-        self.stats = {
-            'drop': [],
-            'deferred': [],
-            'cancelled': [],
-            'mapped': []
+        self.stats: IntDictIntList = IntDict({
+            'drop': IntList(),
+            'deferred': IntList(),
+            'cancelled': IntList(),
+            'mapped': IntList()
             }
+        )
 
     @property
     def name(self):
@@ -36,35 +37,21 @@ class baseAbsLoadBalancer(ABC):
     def name(self, name: str):
         self._name = name
 
-    @property
-    def total_no_of_tasks(self):
-        return self._total_no_of_tasks
-
-    @total_no_of_tasks.setter
-    def total_no_of_tasks(self, total_no_of_tasks):
-        if not isinstance(total_no_of_tasks, int):
-            raise TypeError('total no of tasks must be a'
-                            'integer value')
-        elif total_no_of_tasks < 0:
-            raise ValueError('total no of tasks cannot be'
-                             'a negative value')
-        self._total_no_of_tasks = total_no_of_tasks
-
     def get_stats(self):
         return self.stats
 
-    def get_queue(self):
-        return self.queue
+    def is_empty(self):
+        return self.queue.empty()
 
-    def isempty(self):
-        return self.queue.isempty()
+    def is_full(self):
+        return self.queue.full()
 
     def choose_task(self, index=0):
         task_to_be_actioned = self.queue.get(index)
         return task_to_be_actioned
 
     def defer(self, task):
-        if clock.time() > task.hard_deadline:
+        if self.clk.time > task.hard_deadline:
             self.drop(task)
             return 1
         self.task_to_be_actioned = None
@@ -80,7 +67,7 @@ class baseAbsLoadBalancer(ABC):
     def drop(self, task):
         self.task_to_be_actioned = None
         task.status = TaskStatus.CANCELLED
-        task.drop_time = clock.time()
+        task.drop_time = self.clk.time
         self.stats['dropped'].append(task)
         self.queue.remove(task)
 
@@ -97,9 +84,9 @@ class baseAbsLoadBalancer(ABC):
 
     def prune(self):
         for task in self.queue.list:
-            if clock.time() > task.hard_deadline:
+            if self.clk.time > task.hard_deadline:
                 task.status = TaskStatus.CANCELLED
-                task.drop_time = clock.time()
+                task.drop_time = self.clk.time
                 self.stats['dropped'].append(task)
                 self.queue.remove(task)
 

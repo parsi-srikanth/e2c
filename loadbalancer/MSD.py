@@ -9,7 +9,7 @@ from loadbalancer import BaseLoadBalancer
 class MSD(BaseLoadBalancer):
     def __init__(self, total_no_of_tasks: int):
         super().__init__()
-        self.name(self, 'MSD')
+        self.name = 'MSD'
         self.total_no_of_tasks(self, total_no_of_tasks)
 
     def generate_provisional_map(self):

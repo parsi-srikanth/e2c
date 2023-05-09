@@ -7,10 +7,9 @@ from loadbalancer import BaseLoadBalancer
 
 
 class MMU(BaseLoadBalancer):
-    def __init__(self, total_no_of_tasks: int):
-        super().__init__()
-        self.name(self, 'MMU')
-        self.total_no_of_tasks(self, total_no_of_tasks)
+    def __init__(self, qsize=0):
+        super().__init__(qsize)
+        self.name = 'MMU'
 
     def generate_provisional_map(self):
         provisional_map = []

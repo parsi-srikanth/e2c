@@ -10,10 +10,9 @@ import numpy as np
 
 class MEET(BaseLoadBalancer):
 
-    def __init__(self, total_no_of_tasks: int):
-        super().__init__()
-        self.name(self, 'MEET')
-        self.total_no_of_tasks(self, total_no_of_tasks)
+    def __init__(self, qsize=0):
+        super().__init__(qsize)
+        self.name = 'MEET'
 
     def decide(self):
         """

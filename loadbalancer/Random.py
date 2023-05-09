@@ -7,7 +7,7 @@ class Random(BaseLoadBalancer):
 
     def __init__(self, total_no_of_tasks: int, N: int):
         super().__init__()
-        self.name(self, 'MECT')
+        self.name = 'Random'
         self.total_no_of_tasks(self, total_no_of_tasks)
         self.N = N
 

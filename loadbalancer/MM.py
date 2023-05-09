@@ -3,16 +3,16 @@ TODO: Add description
 
 """
 
-from config import config
+from config import config_machine
 from loadbalancer import BaseLoadBalancer
+from scheduler import FCFS
 
 
 class MM(BaseLoadBalancer):
 
-    def __init__(self, total_no_of_tasks: int):
-        super().__init__()
-        self.name(self, 'MM')
-        self.total_no_of_tasks(self, total_no_of_tasks)
+    def __init__(self, qsize=0):
+        super().__init__(qsize)
+        self.name = 'MM'
 
     def generate_provisional_map(self):
         provisional_map = []
@@ -20,8 +20,10 @@ class MM(BaseLoadBalancer):
         for task in self.queue.list:
             min_ct = float('inf')
             min_ct_machine = None
-            for machine in config.machines:
-                pct = machine.compute_completion_time(task)
+            for machine in config_machine.machines:
+                #  pct = machine.compute_completion_time(task)
+                pct = FCFS.q_expec_completion_time() + \
+                    task.expected_execution_times(machine.type.id)
                 if pct < min_ct and not machine.queue.full():
                     min_ct = pct
                     min_ct_machine = machine
