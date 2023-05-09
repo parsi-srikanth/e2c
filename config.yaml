@@ -1,17 +1,17 @@
 # Description:
 # E2C uses this yaml file to setup the computing system for simulation.
-# The config file has two parts: 
+# The config file has two parts:
 #   (i)  E2C paramters:
 #         This part is used to control the behavior of E2C.
 #   (ii) system parametrs:
-#          This part is used to setup different components of the computing 
-#          system for the simulation in E2C. The settings are for loadbalancer,
-#          scheduler, and tiers. Macines, tasks, and battery are also defined
-#          for each tier.
+#          This part is used to setup different components of the computing
+#          system that will be simulated later using E2C. The settings are
+#          for loadbalancer, scheduler, and tiers. Macines, tasks, and battery
+#          are also defined for each tier.
 
 e2c parameters:
   verbosity: INFO
-  gui: on
+  gui: off
 
 system parameters:
   # Loadbalancer methods must be added here.
@@ -27,7 +27,7 @@ system parameters:
     used: WFCFS
 
   scheduler:
-    # Scheduler methods must be added here. 
+    # Scheduler methods must be added here.
     methods:
     - RR
     used: RR
@@ -70,7 +70,7 @@ system parameters:
       # scheduuler method should be in scheduler methods defined above.
         method: RR
       machines:
-      # Machines in each subtier are defined here. An anchor 
+      # Machines in each subtier are defined here. An anchor
       # that follows &m<number> convention is also added to each machine
       # definition.
         M2:
@@ -83,11 +83,9 @@ system parameters:
           static power: 10.0
           replicas: 1000
       tasks:
-      # Tasks in each subtier are defined here. An anchor that follows 
-      # that follows &t<number> convention is also added to each task 
-      # definition.
-      # eet: expected execution time of the task type on each machine 
-      # type. 
+      # Tasks in each subtier are defined here.
+      # eet: expected execution time of the task type on each machine
+      # type.
         T1:
           deadline: 50
           eet:
