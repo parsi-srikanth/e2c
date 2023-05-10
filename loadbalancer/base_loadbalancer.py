@@ -3,9 +3,8 @@ TODO: Add description
 """
 from abs import ABC
 from clock import Clock
-from config import config
-from event import Event, EventTypes
-from Task import TaskStatus
+from event import Event, EventTypes, EventQueue
+from Task import TaskStatus, Task
 from utils.descriptors import IntDict, IntDictIntList, IntList, QTask
 
 
@@ -47,7 +46,7 @@ class baseAbsLoadBalancer(ABC):
         return self.queue.full()
 
     def choose_task(self, index=0):
-        task_to_be_actioned = self.queue.get(index)
+        task_to_be_actioned = self.queue.list[index]
         return task_to_be_actioned
 
     def defer(self, task):
@@ -57,28 +56,28 @@ class baseAbsLoadBalancer(ABC):
         self.task_to_be_actioned = None
         task.status = TaskStatus.DEFERRED
         task.no_of_deferring += 1
-        self.queue.put(task)
         self.stats['deferred'].append(task)
-        event_time = config.event_queue.event_list[0].time
+        event_time = EventQueue.event_list[0].time
         event_type = EventTypes.DEFERRED
         event = Event(event_time, event_type, task)
-        config.event_queue.add_event(event)
+        EventQueue.add_event(event)
 
     def drop(self, task):
         self.task_to_be_actioned = None
         task.status = TaskStatus.CANCELLED
         task.drop_time = self.clk.time
         self.stats['dropped'].append(task)
-        self.queue.remove(task)
+        self.queue.pop(task)
 
     def assign_task_to_machine(self, task, machine):
-        task = self.choose_task() if self.task_to_be_actioned is None \
-            else self.task_to_be_actioned
-        assignment = machine.admit(task)
-        if assignment != 'notEmpty':
+        if not isinstance(task, Task):
+            raise TypeError("Task must be of type Task")
+        assignment = machine.scheduler.admit(task)
+        if assignment is not False:
             task.assigned_machine = machine
-            self.stats['mapped'].append(task)
             task.status = TaskStatus.MAPPED
+            self.stats['mapped'].append(task)
+            self.queue.pop(task)
         else:
             self.defer(task)
 
@@ -88,7 +87,7 @@ class baseAbsLoadBalancer(ABC):
                 task.status = TaskStatus.CANCELLED
                 task.drop_time = self.clk.time
                 self.stats['dropped'].append(task)
-                self.queue.remove(task)
+                self.queue.pop(task)
 
     def decide():
         raise NotImplementedError("Please Implement this method")
