@@ -1,4 +1,3 @@
-from config import config
 from loadbalancer import BaseLoadBalancer
 
 
@@ -11,7 +10,7 @@ class LeastConnection(BaseLoadBalancer):
     def get_next_machine(self):
         next_machine = None
         min_queue_size = float('inf')
-        for machine in config.machines:
+        for machine in self.machines:
             queue_size = len(machine.queue)
             if not machine.queue.full():
                 if queue_size < min_queue_size:
@@ -29,6 +28,6 @@ class LeastConnection(BaseLoadBalancer):
 
         task = self.choose_task()
         selected_machine = self.get_next_machine()
-        self.assign_task_to_machine(task, selected_machine)
+        self.map(task, selected_machine)
         self.queue.remove(task)
         return selected_machine

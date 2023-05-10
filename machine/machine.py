@@ -24,6 +24,7 @@ class Machine(baseAbsMachine):
         super().__init__(machine_type)
         self.energy_model = PowerDurationModel(self)
         self.scheduler = FCFS(self)
+        self.nxt_available_time = self.clk.time
 
     def execute(self, task: Task, time_slice: float) -> None:
         """

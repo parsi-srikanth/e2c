@@ -1,11 +1,10 @@
 """
 TODO: Add description
 """
-from abs import ABC
+from abc import ABC, abstractmethod
 from clock import Clock
-from event import Event, EventTypes, EventQueue
 from Task import TaskStatus, Task
-from utils.descriptors import IntDict, IntDictIntList, IntList, QTask
+from utils.descriptors import IntDictIntList, IntList, MachineList, QTask
 
 
 class baseAbsLoadBalancer(ABC):
@@ -13,15 +12,16 @@ class baseAbsLoadBalancer(ABC):
     TODO: AddClass description
     """
 
-    task_to_be_actioned = None
     clk: Clock = Clock()
 
-    def __init__(self, qsize=0) -> None:
+    def __init__(self, machines, qsize=0) -> None:
         super().__init__()
+        if not isinstance(machines, MachineList):
+            raise TypeError('message')
+        self._machines: MachineList = machines
         self.queue = QTask(maxsize=qsize)
         self._name = 'base'
-        self.stats: IntDictIntList = IntDict({
-            'drop': IntList(),
+        self.stats: IntDictIntList = IntDictIntList({
             'deferred': IntList(),
             'cancelled': IntList(),
             'mapped': IntList()
@@ -36,6 +36,14 @@ class baseAbsLoadBalancer(ABC):
     def name(self, name: str):
         self._name = name
 
+    @property
+    def machines(self):
+        return self._machines
+
+    @machines.setter
+    def machines(self, machines: MachineList):
+        self._machines = machines
+
     def get_stats(self):
         return self.stats
 
@@ -46,30 +54,25 @@ class baseAbsLoadBalancer(ABC):
         return self.queue.full()
 
     def choose_task(self, index=0):
-        task_to_be_actioned = self.queue.list[index]
-        return task_to_be_actioned
+        queue_list = list(self.queue)
+        return queue_list[index]
 
     def defer(self, task):
         if self.clk.time > task.hard_deadline:
             self.drop(task)
             return 1
-        self.task_to_be_actioned = None
         task.status = TaskStatus.DEFERRED
         task.no_of_deferring += 1
         self.stats['deferred'].append(task)
-        event_time = EventQueue.event_list[0].time
-        event_type = EventTypes.DEFERRED
-        event = Event(event_time, event_type, task)
-        EventQueue.add_event(event)
 
     def drop(self, task):
-        self.task_to_be_actioned = None
         task.status = TaskStatus.CANCELLED
         task.drop_time = self.clk.time
         self.stats['dropped'].append(task)
-        self.queue.pop(task)
+        self.queue.remove(task)
+        #  implement remove method
 
-    def assign_task_to_machine(self, task, machine):
+    def map(self, task, machine):
         if not isinstance(task, Task):
             raise TypeError("Task must be of type Task")
         assignment = machine.scheduler.admit(task)
@@ -77,7 +80,7 @@ class baseAbsLoadBalancer(ABC):
             task.assigned_machine = machine
             task.status = TaskStatus.MAPPED
             self.stats['mapped'].append(task)
-            self.queue.pop(task)
+            self.queue.remove(task)
         else:
             self.defer(task)
 
@@ -87,7 +90,8 @@ class baseAbsLoadBalancer(ABC):
                 task.status = TaskStatus.CANCELLED
                 task.drop_time = self.clk.time
                 self.stats['dropped'].append(task)
-                self.queue.pop(task)
+                self.queue.remove(task)
 
+    @abstractmethod
     def decide():
         raise NotImplementedError("Please Implement this method")
