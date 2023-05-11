@@ -251,19 +251,27 @@ class MachineList(list):
 class QTask(Queue):
 
     def __init__(self, maxsize=0):
-        super().__init__(maxsize)
+        super().__init__(maxsize=0)
+        self.maxsize = maxsize
+        self.list = []
 
     def put(self, item):
         if not isinstance(item, Task):
             raise TypeError("All values of QTask must be Task type")
-        super().put(item)
+        self.list.append(item)
 
     def get(self, index=0):
         try:
-            queue_list = list(self)
-            value = queue_list[index]
-            queue_list.remove(index)
+            self.list[index]
         except ValueError as val_err:
             raise ValueError(f'index {index} is out of range \
-                of list {queue_list} with error {val_err}')
-        return value
+                of list {self.list} with error {val_err}')
+        return self.list.pop(index)
+
+    def remove(self, item):
+        try:
+            index = self.list.index(item)
+        except ValueError as val_err:
+            raise ValueError(f'index {index} is out of range \
+                of list {self.list} with error {val_err}')
+        self.list.pop(index)

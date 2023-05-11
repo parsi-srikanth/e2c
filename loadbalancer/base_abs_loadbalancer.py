@@ -70,7 +70,6 @@ class baseAbsLoadBalancer(ABC):
         task.drop_time = self.clk.time
         self.stats['dropped'].append(task)
         self.queue.remove(task)
-        #  implement remove method
 
     def map(self, task, machine):
         if not isinstance(task, Task):
