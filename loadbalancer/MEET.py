@@ -3,17 +3,15 @@ TODO: Add description
 
 """
 
-from config import config
 from loadbalancer import BaseLoadBalancer
 import numpy as np
 
 
 class MEET(BaseLoadBalancer):
 
-    def __init__(self, total_no_of_tasks: int):
-        super().__init__()
-        self.name(self, 'MEET')
-        self.total_no_of_tasks(self, total_no_of_tasks)
+    def __init__(self, qsize=0):
+        super().__init__(qsize)
+        self.name = 'MEET'
 
     def decide(self):
         """
@@ -26,19 +24,19 @@ class MEET(BaseLoadBalancer):
 
         task = self.choose_task()
         ties = []
-        provisional_maps = []
-        for machine in config.machines:
+        expected_task_machine_map = []
+        for machine in self.machines:
             score = task.get_exec_time(machine.type.name)
             # TODO: add get_exec_time to task.py
-            provisional_maps.append((score, machine.id))
+            expected_task_machine_map.append((score, machine.id))
 
-        min_score = min(provisional_maps, key=lambda x: x[0])[0]
-        provisional_maps = np.array(provisional_maps)
-        ties = provisional_maps[provisional_maps[:, 0] == min_score]
+        min_score = min(expected_task_machine_map, key=lambda x: x[0])[0]
+        expected_task_machine_map = np.array(expected_task_machine_map)
+        ties = expected_task_machine_map[expected_task_machine_map[:, 0] == min_score]
         np.random.seed(task.id)
         selected_machine_idx = int(np.random.choice(ties[:, 1]))
-        selected_machine = config.machines[selected_machine_idx]
-        # check implementation of assign_task_to_machine
-        self.assign_task_to_machine(task, selected_machine)
+        selected_machine = self.machines[selected_machine_idx]
+        # check implementation of map
+        self.map(task, selected_machine)
         self.queue.remove(task)
         return selected_machine
