@@ -1,8 +1,8 @@
-from loadbalancer import BaseLoadBalancer
+from loadbalancer import BaseAbsLoadBalancer
 import random
 
 
-class Random(BaseLoadBalancer):
+class Random(BaseAbsLoadBalancer):
 
     def __init__(self, total_no_of_tasks: int, N: int):
         super().__init__()

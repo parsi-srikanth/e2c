@@ -2,10 +2,10 @@
 TODO: Add Description
 """
 
-from loadbalancer import BaseLoadBalancer
+from loadbalancer import BaseAbsLoadBalancer
 
 
-class MMU(BaseLoadBalancer):
+class MMU(BaseAbsLoadBalancer):
     def __init__(self, qsize=0):
         super().__init__(qsize)
         self.name = 'MMU'

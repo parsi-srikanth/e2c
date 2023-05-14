@@ -3,11 +3,11 @@ TODO: Add description
 """
 from abc import ABC, abstractmethod
 from clock import Clock
-from Task import TaskStatus, Task
+from task import TaskStatus, Task
 from utils.descriptors import IntDictIntList, IntList, MachineList, QTask
 
 
-class baseAbsLoadBalancer(ABC):
+class BaseAbsLoadBalancer(ABC):
     """
     TODO: AddClass description
     """

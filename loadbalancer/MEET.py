@@ -3,11 +3,11 @@ TODO: Add description
 
 """
 
-from loadbalancer import BaseLoadBalancer
+from loadbalancer import BaseAbsLoadBalancer
 import numpy as np
 
 
-class MEET(BaseLoadBalancer):
+class MEET(BaseAbsLoadBalancer):
 
     def __init__(self, qsize=0):
         super().__init__(qsize)

@@ -1,7 +1,7 @@
-from loadbalancer import BaseLoadBalancer
+from loadbalancer import BaseAbsLoadBalancer
 
 
-class LeastConnection(BaseLoadBalancer):
+class LeastConnection(BaseAbsLoadBalancer):
 
     def __init__(self, qsize=0):
         super().__init__(qsize)

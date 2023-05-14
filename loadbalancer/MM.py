@@ -3,11 +3,11 @@ TODO: Add description
 
 """
 
-from loadbalancer import BaseLoadBalancer
+from loadbalancer import BaseAbsLoadBalancer
 from utils.descriptors import MachineList
 
 
-class MM(BaseLoadBalancer):
+class MM(BaseAbsLoadBalancer):
 
     def __init__(self, machines: MachineList, qsize=0):
         super().__init__(machines, qsize)
