@@ -2,13 +2,12 @@
 TODO: Add description
 """
 from abc import ABC, abstractmethod
-
 from task.task import Task
 from utils.descriptors import FloatDict, IntDict, IntDictIntList, IntList
 from clock import Clock
 from machine.machine_type import MachineType
 from machine.machine_status import MachineStatus
-from scheduler.base_abs_scheduler import baseAbsScheduler
+import itertools
 
 
 class baseAbsMachine(ABC):
@@ -16,14 +15,13 @@ class baseAbsMachine(ABC):
     TODO: Class description
     """
     clk: Clock = Clock()
-    id: int = 0
+    newid = itertools.count()
 
-    def __init__(self, machine_type: MachineType) -> None:
+    def __init__(self, machine_type: MachineType, scheduler) -> None:
         super().__init__()
-        baseAbsMachine.id += 1
-        self._id = baseAbsMachine.id
+        self._id = next(baseAbsMachine.newid)
         self._machine_type: MachineType = machine_type
-        self._scheduler = None
+        self._scheduler = scheduler
         self._status: MachineStatus = MachineStatus.OFF
         self._nxt_available_time: float = 0.0
         self._running_task: Task = None
@@ -73,8 +71,9 @@ class baseAbsMachine(ABC):
         """
         TODO: Change baseABsScheduler to Scheduler
         """
-        if not isinstance(scheduler, baseAbsScheduler):
-            raise TypeError("Scheduler must be of type baseAbsScheduler")
+        # Modified by : Srikanth
+        # if not isinstance(scheduler, baseAbsScheduler):
+        #     raise TypeError("Scheduler must be of type baseAbsScheduler")
         self._scheduler = scheduler
 
     @property

@@ -2,10 +2,10 @@
 TODO: Add Description
 """
 
-from loadbalancer import BaseLoadBalancer
+from loadbalancer import BaseAbsLoadBalancer
 
 
-class MSD(BaseLoadBalancer):
+class MSD(BaseAbsLoadBalancer):
     def __init__(self, total_no_of_tasks: int):
         super().__init__()
         self.name = 'MSD'

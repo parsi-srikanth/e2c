@@ -12,7 +12,6 @@ from task.task_status import TaskStatus
 from event.event import Event
 from event.event_type import EventType
 from event.event_queue import EventQueue
-from scheduler.FCFS import FCFS
 
 
 class Machine(baseAbsMachine):
@@ -20,10 +19,9 @@ class Machine(baseAbsMachine):
     TODO: Add description
     """
 
-    def __init__(self, machine_type: MachineType) -> None:
-        super().__init__(machine_type)
+    def __init__(self, machine_type: MachineType, scheduler) -> None:
+        super().__init__(machine_type, scheduler)
         self.energy_model = PowerDurationModel(self)
-        self.scheduler = FCFS(self)
         self.nxt_available_time = self.clk.time
 
     def execute(self, task: Task, time_slice: float) -> None:

@@ -2,9 +2,6 @@
 TODO: Add description
 """
 from power.base_abs_energy_model import baseAbsEnergyModel
-from machine.machine import Machine
-from machine.machine_status import MachineStatus
-from machine.machine_type import MachineType
 
 
 class PowerDurationModel(baseAbsEnergyModel):
@@ -12,10 +9,11 @@ class PowerDurationModel(baseAbsEnergyModel):
     TODO: Add description
     """
 
-    def __init__(self, machine: Machine) -> None:
+    #  Modified by : Srikanth
+    def __init__(self, machine) -> None:
         super().__init__(machine)
 
-    def dyn_energy_consump(self, duration: float) -> float:
+    def calc_dyn_energy_consump(self, duration: float) -> float:
         """
         TODO: add description
         """
@@ -23,7 +21,7 @@ class PowerDurationModel(baseAbsEnergyModel):
         energy_consumption = dyn_power * duration
         return energy_consumption
 
-    def idle_energy_consump(self, duration: float) -> float:
+    def calc_idle_energy_consump(self, duration: float) -> float:
         """
         TODO: add description
         """

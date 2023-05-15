@@ -1,7 +1,7 @@
-from loadbalancer import BaseLoadBalancer
+from loadbalancer import BaseAbsLoadBalancer
 
 
-class FIRST(BaseLoadBalancer):
+class FIRST(BaseAbsLoadBalancer):
 
     def __init__(self, qsize=0):
         super().__init__(qsize)

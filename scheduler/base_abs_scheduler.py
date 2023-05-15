@@ -12,8 +12,8 @@ class baseAbsScheduler(ABC):
     TODO: Class description
     """
 
-    def __init__(self, machine: Machine, timeslice: float = float('inf'),
-                 qsize=0) -> None:
+    def __init__(self, machine: Machine, qsize=0,
+                 timeslice: float = float('inf')) -> None:
         super().__init__()
         self.name = None
         self.queue = QTask(maxsize=qsize)
@@ -49,10 +49,10 @@ class baseAbsScheduler(ABC):
         self._time_slice = timeslice
 
     def is_empty(self):
-        return self.queue.empty()
+        return len(self.queue.list) == 0
 
     def is_full(self):
-        return self.queue.full()
+        return len(self.queue.list) == self.queue.maxsize
 
     @abstractmethod
     def schedule(self):
@@ -70,6 +70,7 @@ class baseAbsScheduler(ABC):
     def allocate(self, task: Task) -> None:
         raise NotImplementedError
 
+#  Modified by : Srikanth
     @abstractmethod
-    def q_expec_completion_time(self):
+    def q_expec_completion_time(self, machine):
         raise NotImplementedError

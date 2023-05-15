@@ -2,11 +2,11 @@
 TODO: Add Description
 """
 
-from loadbalancer import BaseLoadBalancer
+from loadbalancer import BaseAbsLoadBalancer
 import numpy as np
 
 
-class MECT(BaseLoadBalancer):
+class MECT(BaseAbsLoadBalancer):
 
     def __init__(self, qsize=0):
         super().__init__(qsize)

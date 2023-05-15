@@ -3,11 +3,12 @@ TODO: Add description
 """
 from abc import ABC, abstractmethod
 from clock import Clock
-from Task import TaskStatus, Task
+from task.task_status import TaskStatus
+from task.task import Task
 from utils.descriptors import IntDictIntList, IntList, MachineList, QTask
 
 
-class baseAbsLoadBalancer(ABC):
+class BaseAbsLoadBalancer(ABC):
     """
     TODO: AddClass description
     """
@@ -58,7 +59,7 @@ class baseAbsLoadBalancer(ABC):
         return queue_list[index]
 
     def defer(self, task):
-        if self.clk.time > task.hard_deadline:
+        if self.clk.time > task.deadline:
             self.drop(task)
             return 1
         task.status = TaskStatus.DEFERRED
@@ -76,16 +77,16 @@ class baseAbsLoadBalancer(ABC):
             raise TypeError("Task must be of type Task")
         assignment = machine.scheduler.admit(task)
         if assignment is not False:
-            task.assigned_machine = machine
-            task.status = TaskStatus.MAPPED
-            self.stats['mapped'].append(task)
+            task.assigned_machine_id = machine.machine_type.id
+            self.stats['mapped'].append(task.id)
             self.queue.remove(task)
         else:
             self.defer(task)
 
     def prune(self):
-        for task in self.queue.list:
-            if self.clk.time > task.hard_deadline:
+        while not self.queue.empty():
+            task = self.queue.get()
+            if self.clk.time > task.deadline:
                 task.status = TaskStatus.CANCELLED
                 task.drop_time = self.clk.time
                 self.stats['dropped'].append(task)
