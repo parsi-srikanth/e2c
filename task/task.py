@@ -6,18 +6,17 @@ TODO: add description
 from task.task_status import TaskStatus
 from task.task_type import TaskType
 from utils.descriptors import FloatDict, FloatDictFloatList, FloatList
-from machine.machine import Machine
+import itertools
 
 
 class Task:
     """
     TODO: add description
     """
-    id: int = 0
+    newid = itertools.count()
 
     def __init__(self, task_type: TaskType, arrival_time: float) -> None:
-        Task.id += 1
-        self._id = Task.id
+        self._id = next(Task.newid)
         self._type: TaskType = task_type
         self._status: TaskStatus = TaskStatus.ARRIVING
         self._deferred_count: int = 0
@@ -33,11 +32,11 @@ class Task:
         self._execution_times: FloatDict = FloatDict()
         self._expected_execution_times: FloatDict = FloatDict()
         self._remaining_exec: float = None
-        self._assigned_machine: Machine = None
+        #  Modified by : Srikanth
+        self._assigned_machine_id: int = None
         self._energy_usuage: float = 0.0
         self._wastaed_energy: bool = False
-        self.deadline: float = (self._time_pinpoint['arrival'] +
-                                self._type.deadline)
+        self.deadline: float = (arrival_time + self._type.deadline)
 
     @property
     def id(self) -> int:
@@ -147,16 +146,19 @@ class Task:
                              'a negative value')
         self._remaining_exec = remaining_exec
 
+    #  Modified by : Srikanth
     @property
-    def assigned_machine(self) -> Machine:
-        return self._assigned_machine
+    def assigned_machine_id(self) -> int:
+        return self._assigned_machine_id
 
-    @assigned_machine.setter
-    def assigned_machine(self, assigned_machine: Machine) -> None:
-        if not isinstance(assigned_machine, Machine):
+    #  Modified by : Srikanth
+    @assigned_machine_id.setter
+    def assigned_machine_id(self, assigned_machine_id: int) -> None:
+        if not isinstance(assigned_machine_id, int):
             raise TypeError('Assigned machine of the task must be a'
-                            'Machine value')
-        self._assigned_machine = assigned_machine
+                            'int value')
+        # check if assigned_machine_id is less than max machine id from config
+        self._assigned_machine_id = assigned_machine_id
 
     @property
     def energy_usuage(self) -> float:

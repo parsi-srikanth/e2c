@@ -18,11 +18,12 @@ class FCFS(baseAbsScheduler):
         super().__init__(machine, qsize)
         self.name = "FCFS"
 
-    def admit(self, task: Task) -> None:
+    def admit(self, task: Task) -> bool:
         if not self.is_full():
             self.queue.put(task)
+            return True
         else:
-            raise Exception("Queue is full")
+            return False
 
     def pop(self):
         if not self.is_empty():
@@ -43,13 +44,13 @@ class FCFS(baseAbsScheduler):
             task = self.pop()
             self.allocate(task)
 
-    def q_expec_completion_time(self):
-        if self.machine.is_working():
-            nxt_available_time = self.machine.nxt_available_time
-            for task in self.queue.queue:
+    def q_expec_completion_time(self, machine):
+        if machine.is_working():
+            nxt_available_time = machine.nxt_available_time
+            for task in self.queue.list:
                 expected_completion_time = (nxt_available_time +
                                             task.expected_execution_times[
-                                                self.machine.type.id])
+                                                machine.machine_type.id])
                 if expected_completion_time < task.deadline:
                     nxt_available_time = expected_completion_time
                 else:
